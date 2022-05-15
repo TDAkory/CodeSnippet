@@ -1,0 +1,8 @@
+project(CodeSnippet_bench)
+
+add_subdirectory(lib)
+
+add_executable(CodeSnippet_bench_run falgo_bench.cpp)
+
+target_link_libraries(CodeSnippet_bench_run container_lib)
+target_link_libraries(CodeSnippet_bench_run benchmark::benchmark)

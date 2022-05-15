@@ -1,0 +1,7 @@
+project(CodeSnippet_tests)
+add_subdirectory(lib)
+
+add_executable(CodeSnippet_tests falgo_test.cpp)
+
+target_link_libraries(CodeSnippet_tests container_lib)
+target_link_libraries(CodeSnippet_tests gtest gtest_main)
