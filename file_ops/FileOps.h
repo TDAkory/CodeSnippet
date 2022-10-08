@@ -14,7 +14,7 @@ public:
 
     static bool Remove(const std::string &file);
 
-    static void WriteTo(const std::string &file, const std::vector<std::string> &&lines);
+    static void OverWriteTo(const std::string &file, const std::vector<std::string> &&lines);
 
 };
 

@@ -6,5 +6,5 @@
 #include "gtest/gtest.h"
 
 TEST(TestFileOps, TestWriteTo) {
-    FileOps::WriteTo("tmp.txt", {"hello", "world"});
+    FileOps::OverWriteTo("tmp.txt", {"hello", "world"});
 }

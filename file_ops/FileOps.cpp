@@ -15,7 +15,7 @@ bool FileOps::Remove(const std::string &file) {
     return (remove(file.c_str()) == 0);
 }
 
-void FileOps::WriteTo(const std::string &file, const std::vector<std::string> &&lines){
+void FileOps::OverWriteTo(const std::string &file, const std::vector<std::string> &&lines){
     if (Exist(file)) {
         (void) Remove(file);
     }
