@@ -6,5 +6,6 @@ set(HEADER_FILES
 set(SOURCE_FILES
         example.cpp)
 
-#add_library(ThreadPool_lib ${SOURCE_FILES} ${HEADER_FILES})
+add_library(ThreadPool_lib ${SOURCE_FILES} ${HEADER_FILES})
+
 add_executable(ThreadPool_run ${SOURCE_FILES} ${HEADER_FILES})
