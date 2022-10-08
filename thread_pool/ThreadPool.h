@@ -33,7 +33,7 @@ public:
     void shutdown() {
         shutdown_ = true;
         conditional_lock_.notify_all();
-
+        std::cout << "Task Left: " << queue_.size() << std::endl;
         for(std::size_t i = 0; i < threads_.size(); i++) {
             if (threads_[i].joinable()) {
                 threads_[i].join();
@@ -51,7 +51,6 @@ public:
         };
 
         queue_.enqueue(wrapper_func);
-        std::cout << "submit one: " << queue_.size() << std::endl;
         conditional_lock_.notify_one();
 
         return task_ptr->get_future();
@@ -65,16 +64,18 @@ private:
 
         void operator()() {
             std::function<void()> func;
-            bool dequeued;
+            bool dequeued = false;
             while (!pool_->shutdown_) {
                 std::unique_lock<std::mutex> lock(pool_->conditional_mutex_);
                 if (pool_->queue_.empty()) {
                     pool_->conditional_lock_.wait(lock);
                 }
                 dequeued = pool_->queue_.dequeue(func);
-            }
-            if (dequeued) {
-                func();
+
+                if (dequeued) {
+                    func();
+                    dequeued = false;
+                }
             }
         }
     private:

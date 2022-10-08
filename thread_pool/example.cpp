@@ -16,7 +16,7 @@ auto rnd = std::bind(dist, mt);
 //设置线程睡眠时间
 
 void simulate_hard_computation() {
-    std::this_thread::sleep_for(std::chrono::seconds(10 + rnd()));
+    std::this_thread::sleep_for(std::chrono::milliseconds (10 + rnd()));
 }
 
 // 添加两个数字的简单函数并打印结果
@@ -56,11 +56,11 @@ int main() {
 
     // 提交乘法操作，总共30个
 
-//    for (int i = 1; i < 3; ++i) {
-//        for (int j = 1; j < 10; ++j) {
-//            pool.submit(multiply, i, j);
-//        }
-//    }
+    for (int i = 1; i < 5; ++i) {
+        for (int j = 1; j < 10; ++j) {
+            pool.submit(multiply, i, j);
+        }
+    }
 
     // 使用ref传递的输出参数提交函数
 
