@@ -3,7 +3,7 @@
 //
 
 #ifndef CODESNIPPET_FILEOPS_H
-#define CODESNIPPET_FILEOPS_H]
+#define CODESNIPPET_FILEOPS_H
 
 #include <string>
 #include <vector>
