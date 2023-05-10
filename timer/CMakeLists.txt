@@ -15,7 +15,6 @@ add_library(timer_lib ${LIB_SOURCE_FILES} ${LIB_HEADER_FILES})
 set(EXE_SOURCE_FILES
         timer_run.cpp)
 
-
 add_executable(timer_run ${EXE_SOURCE_FILES})
 
 target_link_libraries(timer_run PUBLIC timer_lib)

@@ -5,6 +5,7 @@
 #include "CBTimer.h"
 #include <chrono>
 #include <thread>
+#include <iostream>
 
 CBTimer::CBTimer(int interval, Callback func) {
   pimpl_ = std::make_shared<Impl>(interval, func);

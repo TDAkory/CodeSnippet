@@ -17,6 +17,7 @@ public:
   typedef std::function<void()> Callback;
 
   CBTimer(int interval, Callback func);
+  virtual ~CBTimer() {}
 
   void Start();
   void Cancel();

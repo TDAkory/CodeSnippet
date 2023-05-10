@@ -7,6 +7,8 @@
 
 class TimerBase {
 public:
+  virtual ~TimerBase() {}
+
   virtual void Timeout() = 0;
 };
 

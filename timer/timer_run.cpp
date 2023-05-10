@@ -3,11 +3,9 @@
 //
 
 #include "CBTimer.h"
-#include <cstdlib>
-#include <string>
-#include <memory>
 #include <iostream>
-#include <tuple>
+#include <memory>
+#include <string>
 
 struct Alarm {
   Alarm(int seconds_, const std::string& message_):seconds(seconds_), message(message_) {
