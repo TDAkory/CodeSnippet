@@ -1,8 +1,5 @@
 project(Timer)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
 set(LIB_HEADER_FILES
         TimerBase.h
         CBTimer.h)

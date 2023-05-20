@@ -1,7 +1,6 @@
 #include <iostream>
-#include "falgo.h"
 
 int main() {
-
+    std::cout << "hello world." << std::endl;
     return 0;
 }
