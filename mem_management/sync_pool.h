@@ -23,6 +23,7 @@ public:
     inline T * Get();
     inline void Put(T *t);
 
+    std::size_t Cap();
 private:
     std::size_t cap_{0};   // stack capacity
     std::size_t idx_{0};   // stack current idx
