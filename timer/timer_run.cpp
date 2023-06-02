@@ -8,7 +8,7 @@
 #include <string>
 
 struct Alarm {
-  Alarm(int seconds_, const std::string& message_):seconds(seconds_), message(message_) {
+  Alarm(int seconds_, const std::string &message_):seconds(seconds_), message(message_) {
   }
 
   int seconds;
@@ -22,6 +22,6 @@ void callback(std::shared_ptr<Alarm> alarm) {
 int main()
 {
       auto alarm = std::make_shared<Alarm>(1, "hello world");
-      CBTimer t(1, std::bind(callback, alarm));
+      CBTimer t(1, [alarm] { return callback(alarm); });
       t.Start();
 }

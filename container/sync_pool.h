@@ -10,7 +10,7 @@
 template <typename T>
 class SyncPool {
 public:
-    SyncPool(std::size_t cap);
+    explicit SyncPool(std::size_t cap);
     SyncPool(std::size_t cap, std::size_t t_cap);
     ~SyncPool();
 
@@ -20,16 +20,16 @@ public:
     SyncPool(SyncPool &&) = delete;
     SyncPool &operator=(SyncPool &&) = delete;
 
-    inline T * Get();
-    inline void Put(T *t);
+     T * Get();
+     void Put(T *t);
 
-    std::size_t Cap();
+     std::size_t Cap();
 private:
-    std::size_t cap_{0};   // stack capacity
-    std::size_t idx_{0};   // stack current idx
+    std::size_t cap_;   // stack capacity
+    std::size_t idx_;   // stack current idx
 
-    std::size_t t_cap_{0}; // T capacity for memory alloc
-    T **stack_{nullptr};         // T pointers
+    std::size_t t_cap_; // T capacity for memory alloc
+    T **stack_;         // T pointers
     std::mutex mut_;
 };
 
@@ -59,7 +59,7 @@ SyncPool<T>::~SyncPool() {
 }
 
 template <typename T>
-T* SyncPool<T>::Get() {
+inline T* SyncPool<T>::Get() {
     {
         std::lock_guard<std::mutex> lk(mut_);
         if (idx_ > 0) {
@@ -70,7 +70,7 @@ T* SyncPool<T>::Get() {
 }
 
 template<typename T>
-void SyncPool<T>::Put(T *t) {
+inline void SyncPool<T>::Put(T *t) {
     if (nullptr == t) {
         return;
     }
@@ -82,6 +82,11 @@ void SyncPool<T>::Put(T *t) {
         }
     }
     delete t;
+}
+
+template<typename T>
+inline std::size_t SyncPool<T>::Cap() {
+    return cap_;
 }
 
 #endif //CODESNIPPET_SYNC_POOL_H

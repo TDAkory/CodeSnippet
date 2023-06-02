@@ -5,7 +5,6 @@
 #ifndef CODESNIPPET_THREADPOOL_H
 #define CODESNIPPET_THREADPOOL_H
 
-#pragma once
 #include <functional>
 #include <future>
 #include <mutex>

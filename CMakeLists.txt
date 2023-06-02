@@ -2,23 +2,25 @@ cmake_minimum_required(VERSION 3.25)
 
 project(CodeSnippet)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 20)
 
 set(SOURCE_FILES main.cpp)
 
 add_executable(CodeSnippet_run ${SOURCE_FILES})
 
-target_compile_features(CodeSnippet_run PUBLIC cxx_std_23)
+target_compile_features(CodeSnippet_run PUBLIC cxx_std_20)
 
-add_subdirectory(container)
 add_subdirectory(test)
 add_subdirectory(bench)
+add_subdirectory(container)
+add_subdirectory(mm)
+add_subdirectory(op_file)
+add_subdirectory(op_func)
+add_subdirectory(op_str)
+add_subdirectory(op_proc)
+add_subdirectory(static_reflect)
 add_subdirectory(thread_pool)
-add_subdirectory(file_ops)
-add_subdirectory(func_cache)
-add_subdirectory(mem_management)
-add_subdirectory(string_ops)
-add_subdirectory(proc_ops)
 add_subdirectory(timer)
 
 include(CheckIPOSupported)

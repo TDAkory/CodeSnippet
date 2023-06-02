@@ -39,8 +39,8 @@ void push_back_lock(const int range, LVector<int> *vec_loc){
 }
 
 static void BM_VEC_LOC(benchmark::State& state) {
-    const int num_th = state.range(0);
-    int rg = num/num_th;
+    auto num_th = state.range(0);
+    auto rg = num / num_th;
     thread th[num_th];
 
 
@@ -63,8 +63,8 @@ void push_back_cas(const int range, LFVector<int> *vec_cas){
 }
 
 static void BM_VEC_CAS(benchmark::State& state) {
-    const int num_th = state.range(0);
-    int rg = num/num_th;
+    auto num_th = state.range(0);
+    auto rg = num / num_th;
     thread th[num_th];
 
 
@@ -92,8 +92,8 @@ void push_back_thl(const int range, TLVector<int> *vec_thl){
 }
 
 static void BM_VEC_THL(benchmark::State& state) {
-    const int num_th = state.range(0);
-    int rg = num/num_th;
+    auto num_th = state.range(0);
+    auto rg = num / num_th;
     thread th[num_th];
 
 
@@ -112,4 +112,4 @@ static void BM_VEC_THL(benchmark::State& state) {
 // Register the function as a benchmark
 BENCHMARK(BM_VEC_LOC)->Arg(10)->Arg(2)->Setup(DoSetup)->Teardown(DoTeardown);
 BENCHMARK(BM_VEC_CAS)->Arg(10)->Arg(2)->Setup(DoSetup)->Teardown(DoTeardown);
-BENCHMARK(BM_VEC_THL)->Arg(10)->Arg(2)->Setup(DoSetup)->Teardown(DoTeardown);
+//BENCHMARK(BM_VEC_THL)->Arg(10)->Arg(2)->Setup(DoSetup)->Teardown(DoTeardown);

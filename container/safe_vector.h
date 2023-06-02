@@ -21,7 +21,7 @@ namespace safe_container {
             v_ = v.v_;
         }
 
-        LVector(LVector<T> &&v) {
+        LVector(LVector<T> &&v) noexcept {
             v_ = v.v_;
         }
 
@@ -52,7 +52,7 @@ namespace safe_container {
             flag_.store(false);
         }
 
-        LFVector(const LFVector &&v) {
+        LFVector(const LFVector &&v) noexcept {
             v_ = v.v_;
             flag_.store(false);
         }
@@ -104,7 +104,7 @@ namespace safe_container {
             vec_ = v.vec_;
         }
 
-        TLVector(const TLVector &&v) {
+        TLVector(const TLVector &&v) noexcept {
             v_ = v.v_;
             vec_ = v.vec_;
         }
@@ -123,7 +123,7 @@ namespace safe_container {
     };
 
     template<typename T>
-    thread_local std::vector<T> TLVector<T>::vec_(0);
+    thread_local std::vector<T> TLVector<T>::vec_;
 }
 
 #endif //CONTAINER_SAFE_VECTOR_H
