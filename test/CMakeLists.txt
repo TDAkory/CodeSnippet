@@ -7,12 +7,14 @@ INCLUDE_DIRECTORIES(../static_reflect)
 INCLUDE_DIRECTORIES(../op_str)
 INCLUDE_DIRECTORIES(../op_proc)
 
-add_executable(CodeSnippet_tests
+set(TEST_SRCS
         ../container/falgo_test.cpp
-        FileOps_test.cpp
-        ProcOps_test.cpp
-        StaticReflect_test.cpp
-        StringSearch_test.cpp)
+        ../op_file/FileOps_test.cpp
+        ../op_proc/ProcOps_test.cpp
+        ../static_reflect/static_reflect_test.cpp
+        ../op_str/StringSearch_test.cpp ../container/sync_pool_test.cpp)
+
+add_executable(CodeSnippet_tests ${TEST_SRCS})
 
 target_link_libraries(CodeSnippet_tests container_lib)
 target_link_libraries(CodeSnippet_tests FileOps_lib)

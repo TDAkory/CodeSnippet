@@ -32,84 +32,40 @@ static void DoTeardown(const benchmark::State& state) {
     delete vec_cas;
 }
 
-void push_back_lock(const int range, LVector<int> *vec_loc){
-    for(int i = 0 ;i < range; i++){
-        vec_loc->push_back(i);
+template<typename T>
+void do_push_back(const int64_t range, T *vec) {
+    for(int i =0; i< range; i++) {
+        vec->push_back(i);
     }
 }
+
 
 static void BM_VEC_LOC(benchmark::State& state) {
-    auto num_th = state.range(0);
-    auto rg = num / num_th;
-    thread th[num_th];
-
-
     for(auto _: state){
-        for(int i = 0; i < num_th; i++){
-            th[i] = thread(push_back_lock, rg, vec_loc);
-        }
-
-        for(int i = 0; i < num_th; i++){
-            th[i].join();
-        }
+        do_push_back(num, vec_loc);
     }
 }
 
-
-void push_back_cas(const int range, LFVector<int> *vec_cas){
-    for(int i = 0 ;i < range; i++){
-        vec_cas->push_back(i);
-    }
-}
 
 static void BM_VEC_CAS(benchmark::State& state) {
-    auto num_th = state.range(0);
-    auto rg = num / num_th;
-    thread th[num_th];
-
-
     for(auto _: state){
-        for(int i = 0; i < num_th; i++){
-            th[i] = thread(push_back_cas, rg, vec_cas);
-        }
-
-        for(int i = 0; i < num_th; i++){
-            th[i].join();
-        }
-    }
-}
-
-void push_back_thl(const int range, TLVector<int> *vec_thl){
-    for(int i = 0 ;i < range; i++){
-        vec_thl->push_back(i);
-    }
-
-    {
-        mtx.lock();
-        vec_thl->merge();
-        mtx.unlock();
+        do_push_back(num, vec_cas);
     }
 }
 
 static void BM_VEC_THL(benchmark::State& state) {
-    auto num_th = state.range(0);
-    auto rg = num / num_th;
-    thread th[num_th];
-
-
     for(auto _: state){
-        for(int i = 0; i < num_th; i++){
-            th[i] = thread(push_back_thl, rg, vec_thl);
-        }
-
-        for(int i = 0; i < num_th; i++){
-            th[i].join();
+        do_push_back(num, vec_thl);
+        {
+            mtx.lock();
+            vec_thl->merge();
+            mtx.unlock();
         }
     }
 }
 
 
 // Register the function as a benchmark
-BENCHMARK(BM_VEC_LOC)->Arg(10)->Arg(2)->Setup(DoSetup)->Teardown(DoTeardown);
-BENCHMARK(BM_VEC_CAS)->Arg(10)->Arg(2)->Setup(DoSetup)->Teardown(DoTeardown);
-//BENCHMARK(BM_VEC_THL)->Arg(10)->Arg(2)->Setup(DoSetup)->Teardown(DoTeardown);
+BENCHMARK(BM_VEC_LOC)->Threads(10)->Threads(2)->Setup(DoSetup)->Teardown(DoTeardown);
+BENCHMARK(BM_VEC_CAS)->Threads(10)->Threads(2)->Setup(DoSetup)->Teardown(DoTeardown);
+//BENCHMARK(BM_VEC_THL)->Threads(10)->Threads(2)->Setup(DoSetup)->Teardown(DoTeardown);
