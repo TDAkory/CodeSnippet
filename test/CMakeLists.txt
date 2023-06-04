@@ -12,7 +12,8 @@ set(TEST_SRCS
         ../op_file/FileOps_test.cpp
         ../op_proc/ProcOps_test.cpp
         ../static_reflect/static_reflect_test.cpp
-        ../op_str/StringSearch_test.cpp ../container/sync_pool_test.cpp)
+        ../op_str/StringSearch_test.cpp
+        ../container/sync_pool_test.cpp)
 
 add_executable(CodeSnippet_tests ${TEST_SRCS})
 

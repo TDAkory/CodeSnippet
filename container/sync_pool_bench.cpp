@@ -29,7 +29,7 @@ static void BM_NORMAL_NEW(benchmark::State &state) {
     }
 }
 
-static void BM_SYNCPOOL_NEW(benchmark::State &state) {
+static void BM_SYNCPOOL(benchmark::State &state) {
     SyncPool<BenchModel> pool(10);
     for (auto _ : state) {
         auto *m = pool.Get();
@@ -39,4 +39,4 @@ static void BM_SYNCPOOL_NEW(benchmark::State &state) {
 }
 
 BENCHMARK(BM_NORMAL_NEW)->ThreadRange(1, 16);
-BENCHMARK(BM_SYNCPOOL_NEW)->ThreadRange(1, 16);
+BENCHMARK(BM_SYNCPOOL)->ThreadRange(1, 16);

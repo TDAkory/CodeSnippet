@@ -22,5 +22,3 @@ static void BM_FactNaive(benchmark::State& state) {
 
 BENCHMARK(BM_SimpleRecursion);
 BENCHMARK(BM_FactNaive);
-
-BENCHMARK_MAIN();

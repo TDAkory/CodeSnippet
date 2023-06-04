@@ -12,6 +12,8 @@ namespace safe_container {
     template<typename T>
     class SyncPool {
     public:
+        SyncPool();
+
         explicit SyncPool(std::size_t cap);
 
         SyncPool(std::size_t cap, std::size_t t_cap);
@@ -33,6 +35,8 @@ namespace safe_container {
         std::size_t Cap();
 
     private:
+        static constexpr std::size_t default_cap = 16;
+
         std::size_t cap_{0};   // stack capacity
         std::size_t idx_{0};   // stack current idx
 
@@ -42,14 +46,24 @@ namespace safe_container {
     };
 
     template<typename T>
+    SyncPool<T>::SyncPool() : cap_(default_cap) {
+    }
+
+    template<typename T>
     SyncPool<T>::SyncPool(std::size_t cap) : cap_(cap) {
         stack_ = new T *[cap_];
+        for (std::size_t i =0; i < cap_; i++) {
+            stack_[i] = new T();
+        }
         idx_ = cap_;
     }
 
     template<typename T>
     SyncPool<T>::SyncPool(std::size_t cap, std::size_t t_cap) : cap_(cap), t_cap_(t_cap) {
         stack_ = new T *[cap_];
+        for (std::size_t i =0; i < cap_; i++) {
+            stack_[i] = new T();
+        }
         idx_ = cap_;
     }
 
