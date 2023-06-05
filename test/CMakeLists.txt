@@ -15,6 +15,8 @@ set(TEST_SRCS
         ../op_str/StringSearch_test.cpp
         ../container/sync_pool_test.cpp)
 
+add_definitions(-DCODESNIPPET_DO_TEST)
+
 add_executable(CodeSnippet_tests ${TEST_SRCS})
 
 target_link_libraries(CodeSnippet_tests container_lib)

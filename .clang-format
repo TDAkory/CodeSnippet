@@ -59,3 +59,5 @@ BraceWrapping:
   BeforeElse: false
   # 缩进大括号
   IndentBraces: false
+
+FixNamespaceComments: true
