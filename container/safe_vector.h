@@ -10,120 +10,109 @@
 
 namespace safe_container {
 
-    template<typename T>
-    class LVector {
-    public:
-        LVector() = default;
+template <typename T>
+class LVector {
+ public:
+    LVector() = default;
 
-        ~LVector() = default;
+    ~LVector() = default;
 
-        LVector(LVector<T> &v) {
-            v_ = v.v_;
+    LVector(const LVector<T> &v) { v_ = v.v_; }
+
+    LVector(LVector<T> &&v) noexcept {
+        v_ = v.v_;
+        v.v_.clear();
+    }
+
+    void push_back(const T &value) noexcept {
+        m_.lock();
+        v_.push_back(value);
+        m_.unlock();
+    }
+
+    T operator[](unsigned int idx) { return v_[idx]; }
+
+ private:
+    std::mutex m_;
+    std::vector<T> v_;
+};
+
+template <typename T>
+class LFVector {
+ public:
+    LFVector() = default;
+
+    ~LFVector() = default;
+
+    LFVector(const LFVector &v) {
+        v_ = v.v_;
+        flag_.store(false);
+    }
+
+    LFVector(LFVector &&v) noexcept {
+        v_ = v.v_;
+        flag_.store(false);
+    }
+
+    void replace(const int idx, const T &value) noexcept {
+        lock();
+        v_[idx] = value;
+        unlock();
+    }
+
+    void push_back(const T &value) noexcept {
+        lock();
+        v_.push_back(value);
+        unlock();
+    }
+
+    T operator[](unsigned int idx) { return v_[idx]; }
+
+ private:
+    void lock() {
+        bool expect = false;
+        while (!flag_.compare_exchange_weak(expect, true)) {
+            expect = false;
         }
+    }
 
-        LVector(LVector<T> &&v) noexcept {
-            v_ = v.v_;
-        }
+    void unlock() { flag_.store(false); }
 
-        void push_back(const T &value) noexcept {
-            m_.lock();
-            v_.push_back(value);
-            m_.unlock();
-        }
+ private:
+    std::atomic<bool> flag_{false};
+    std::vector<T> v_;
+};
 
-        T operator[](unsigned int idx) {
-            return v_[idx];
-        }
+template <typename T>
+class TLVector {
+ public:
+    thread_local static std::vector<T> vec_;
 
-    private:
-        std::mutex m_;
-        std::vector<T> v_;
-    };
+    TLVector() = default;
 
-    template<typename T>
-    class LFVector {
-    public:
-        LFVector() = default;
+    ~TLVector() = default;
 
-        ~LFVector() = default;
+    TLVector(const TLVector &v) {
+        v_ = v.v_;
+        vec_ = v.vec_;
+    }
 
-        LFVector(const LFVector &v) {
-            v_ = v.v_;
-            flag_.store(false);
-        }
+    TLVector(TLVector &&v) noexcept {
+        v_ = v.v_;
+        vec_ = v.vec_;
+    }
 
-        LFVector(const LFVector &&v) noexcept {
-            v_ = v.v_;
-            flag_.store(false);
-        }
+    void push_back(const T &value) { vec_.push_back(value); }
 
-        void replace(const int idx, const T &value) noexcept {
-            lock();
-            v_[idx] = value;
-            unlock();
-        }
+    void merge() { v_.insert(v_.end(), vec_.begin(), vec_.end()); }
 
-        void push_back(const T &value) noexcept {
-            lock();
-            v_.push_back(value);
-            unlock();
-        }
+ private:
+    std::vector<T> v_;
+    std::mutex m_;
+};
 
-        T operator[](unsigned int idx) {
-            return v_[idx];
-        }
+template <typename T>
+thread_local std::vector<T> TLVector<T>::vec_;
+}  // namespace safe_container
 
-    private:
-        void lock() {
-            bool expect = false;
-            while (!flag_.compare_exchange_weak(expect, true)) {
-                expect = false;
-            }
-        }
-
-        void unlock() {
-            flag_.store(false);
-        }
-
-    private:
-        std::atomic<bool> flag_{false};
-        std::vector<T> v_;
-    };
-
-    template<typename T>
-    class TLVector {
-    public:
-        thread_local static std::vector<T> vec_;
-
-        TLVector() = default;
-
-        ~TLVector() = default;
-
-        TLVector(const TLVector &v) {
-            v_ = v.v_;
-            vec_ = v.vec_;
-        }
-
-        TLVector(const TLVector &&v) noexcept {
-            v_ = v.v_;
-            vec_ = v.vec_;
-        }
-
-        void push_back(const T &value) {
-            v_.push_back(value);
-        }
-
-        void merge() {
-            vec_.insert(vec_.end(), v_.begin(), v_.end());
-        }
-
-    private:
-        std::vector<T> v_;
-        std::mutex m_;
-    };
-
-    template<typename T>
-    thread_local std::vector<T> TLVector<T>::vec_;
-}
-
-#endif //CONTAINER_SAFE_VECTOR_H
+#endif  // CONTAINER_SAFE_VECTOR_H
