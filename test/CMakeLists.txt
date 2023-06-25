@@ -13,7 +13,8 @@ set(TEST_SRCS
         ../op_proc/ProcOps_test.cpp
         ../static_reflect/static_reflect_test.cpp
         ../op_str/StringSearch_test.cpp
-        ../container/sync_pool_test.cpp)
+        ../container/sync_pool_test.cpp
+        ../op_func/scope_guard_test.cpp)
 
 add_definitions(-DCODESNIPPET_DO_TEST)
 
