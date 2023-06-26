@@ -8,7 +8,7 @@ set(BENCH_SRCS
         bench_main.cpp
         ../container/falgo_bench.cpp
         ../container/safe_vector_bench.cpp
-        ../container/sync_pool_bench.cpp)
+        ../container/sync_pool_bench.cpp ../container/binary_tree.cpp ../container/binary_tree.h)
 
 add_executable(CodeSnippet_bench ${BENCH_SRCS})
 
