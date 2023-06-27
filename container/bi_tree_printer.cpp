@@ -1,44 +1,15 @@
 //
-// Created by zhaojieyi on 2023/6/26.
+// Created by zhaojieyi on 2023/6/27.
 //
-
-#include "binary_tree.h"
+#include "bi_tree_printer.h"
 
 namespace safe_container {
 
-template <typename T>
-std::string TreeNode<T>::ToString() {
-    data->ToString();
+Printer::Printer(PrintInfoNode *root) : root(root) {
+    setLayerLink();
+    initPosInfo();
+    agjustPosInfo();
 }
-
-}  // namespace safe_container
-
-#include <queue>
-#include <sstream>
-#include "./Printer.h"
-
-class Printer::InfoNode {
- public:
-    std::string content;
-    InfoNode *parent;
-    InfoNode *left = nullptr;
-    InfoNode *right = nullptr;
-    InfoNode *next = nullptr;  // 同一层的下一个节点
-    int pos = 0;               // 结点起始位置
-    int middle = 0;            // 结点中心距起始位置的距离
-    int last = 0;              // 结点末尾距起始位置的距离
-
- public:
-    InfoNode(const std::string &str, InfoNode *parent) : content(str), parent(parent) {}
-    ~InfoNode() {
-        if (this->left)
-            delete this->left;
-        if (this->right)
-            delete this->right;
-        this->left = nullptr;
-        this->right = nullptr;
-    }
-};
 
 Printer::~Printer() {
     if (this->root) {
@@ -47,50 +18,17 @@ Printer::~Printer() {
     }
 }
 
-void Printer::initTreeStructure() {
-    if (this->root) {
-        delete this->root;
-        this->root = nullptr;
-    }
-    this->layerHead.clear();
-    void *rootNode = this->getRoot();
-    if (rootNode == nullptr)
-        return;
-    this->root = this->initTreeStructure(rootNode, nullptr);
-    this->root->middle = this->root->content.size() / 2;
-    this->root->last = this->root->content.size() - 1;
-}
-
-typename Printer::InfoNode *Printer::initTreeStructure(void *node, InfoNode *parent) {
-    InfoNode *newNode = new InfoNode(this->getString(node), parent);
-    void *left = this->getLeft(node);
-    void *right = this->getRight(node);
-    if (left) {
-        InfoNode *leftNode = this->initTreeStructure(left, newNode);
-        leftNode->middle = leftNode->content.size() / 2;
-        leftNode->last = leftNode->content.size() - 1;
-        newNode->left = leftNode;
-    }
-    if (right) {
-        InfoNode *rightNode = this->initTreeStructure(right, newNode);
-        rightNode->middle = (rightNode->content.size() - 1) / 2;
-        rightNode->last = rightNode->content.size() - 1;
-        newNode->right = rightNode;
-    }
-    return newNode;
-}
-
 void Printer::setLayerLink() {
     if (this->root == nullptr)
         return;
     this->layerHead.clear();
-    std::queue<InfoNode *> Q;
+    std::queue<PrintInfoNode *> Q;
     Q.push(this->root);
     while (!Q.empty()) {
         this->layerHead.push_back(Q.front());
         int size = Q.size();
         while (size--) {
-            InfoNode *cur = Q.front();
+            PrintInfoNode *cur = Q.front();
             Q.pop();
             if (size > 0)
                 cur->next = Q.front();
@@ -107,7 +45,7 @@ void Printer::initPosInfo() {
         return;
     this->root->pos = 0;
     for (size_t i = 1; i < this->layerHead.size(); i++) {
-        InfoNode *cur = this->layerHead[i];
+        PrintInfoNode *cur = this->layerHead[i];
         while (cur) {
             if (cur == cur->parent->left) {
                 cur->pos = cur->parent->pos - 2 - cur->middle;
@@ -123,7 +61,7 @@ void Printer::agjustPosInfo() {
     if (this->root == nullptr)
         return;
     for (int i = this->layerHead.size() - 2; i >= 0; i--) {
-        InfoNode *cur = this->layerHead[i];
+        PrintInfoNode *cur = this->layerHead[i];
         while (cur) {
             int cross = this->calcCrossLen(cur);
             if (cross > 0) {
@@ -143,17 +81,17 @@ void Printer::agjustPosInfo() {
     }
 }
 
-int Printer::calcCrossLen(InfoNode *node) {
+int Printer::calcCrossLen(PrintInfoNode *node) {
     if (node == nullptr || node->left == nullptr || node->right == nullptr)
         return 0;
     std::vector<int> leftRight;
     std::vector<int> rightLeft;
-    std::queue<InfoNode *> Q;
+    std::queue<PrintInfoNode *> Q;
     Q.push(node->left);
     while (!Q.empty()) {
         int size = Q.size();
         while (size > 1) {
-            InfoNode *cur = Q.front();
+            PrintInfoNode *cur = Q.front();
             Q.pop();
             if (cur->left)
                 Q.push(cur->left);
@@ -161,7 +99,7 @@ int Printer::calcCrossLen(InfoNode *node) {
                 Q.push(cur->right);
             size--;
         }
-        InfoNode *cur = Q.front();
+        PrintInfoNode *cur = Q.front();
         Q.pop();
         if (cur->left)
             Q.push(cur->left);
@@ -175,7 +113,7 @@ int Printer::calcCrossLen(InfoNode *node) {
     }
     Q.push(node->right);
     while (!Q.empty() && rightLeft.size() < leftRight.size()) {
-        InfoNode *cur = Q.front();
+        PrintInfoNode *cur = Q.front();
         Q.pop();
         int size = Q.size();
         if (cur->left)
@@ -183,7 +121,7 @@ int Printer::calcCrossLen(InfoNode *node) {
         if (cur->right)
             Q.push(cur->right);
         while (size--) {
-            InfoNode *cur = Q.front();
+            PrintInfoNode *cur = Q.front();
             Q.pop();
             if (cur->left)
                 Q.push(cur->left);
@@ -205,7 +143,7 @@ int Printer::calcCrossLen(InfoNode *node) {
     return cross;
 }
 
-void Printer::movePos(InfoNode *node, int len) {
+void Printer::movePos(PrintInfoNode *node, int len) {
     if (node->left)
         this->movePos(node->left, len);
     if (node->right)
@@ -214,13 +152,8 @@ void Printer::movePos(InfoNode *node, int len) {
 }
 
 std::ostream &operator<<(std::ostream &os, Printer &tree) {
-    tree.initTreeStructure();
     if (tree.root == nullptr)
         return os;
-    tree.setLayerLink();
-    tree.initPosInfo();
-    tree.agjustPosInfo();
-
     std::stringstream ss;
 
     for (auto cur : tree.layerHead) {
@@ -274,3 +207,5 @@ std::ostream &operator<<(std::ostream &os, Printer &tree) {
     }
     return os;
 }
+
+}  // namespace safe_container
