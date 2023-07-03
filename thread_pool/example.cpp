@@ -4,19 +4,19 @@
 
 #include <iostream>
 #include <random>
-#include "ThreadPool.h"
-std::random_device rd; //真实随机数产生器
+#include "thread_pool.h"
+std::random_device rd;  // 真实随机数产生器
 
-std::mt19937 mt(rd()); //生成计算随机数mt;
+std::mt19937 mt(rd());  // 生成计算随机数mt;
 
-std::uniform_int_distribution<int> dist(-1, 1);//生成-1000到1000之间的离散均匀分部数
+std::uniform_int_distribution<int> dist(-1, 1);  // 生成-1000到1000之间的离散均匀分部数
 
 auto rnd = std::bind(dist, mt);
 
-//设置线程睡眠时间
+// 设置线程睡眠时间
 
 void simulate_hard_computation() {
-    std::this_thread::sleep_for(std::chrono::milliseconds (10 + rnd()));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10 + rnd()));
 }
 
 // 添加两个数字的简单函数并打印结果
@@ -27,9 +27,9 @@ void multiply(const int a, const int b) {
     std::cout << a << " * " << b << " = " << res << std::endl;
 }
 
-//添加并输出结果
+// 添加并输出结果
 
-void multiply_output(int & out, const int a, const int b) {
+void multiply_output(int &out, const int a, const int b) {
     simulate_hard_computation();
     out = a * b;
     std::cout << a << " * " << b << " = " << out << std::endl;
@@ -43,7 +43,6 @@ int multiply_return(const int a, const int b) {
     std::cout << a << " * " << b << " = " << res << std::endl;
     return res;
 }
-
 
 int main() {
     // 创建3个线程的线程池
@@ -79,7 +78,7 @@ int main() {
     int res = future2.get();
     std::cout << "Last operation result is equals to " << res << std::endl;
 
-    //关闭线程池
+    // 关闭线程池
     pool.shutdown();
 
     return 0;

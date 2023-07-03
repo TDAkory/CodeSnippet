@@ -1,8 +1,8 @@
 project(ThreadPool)
 
 set(HEADER_FILES
-        SafeQueue.h
-        ThreadPool.h)
+        safe_queue.h
+        thread_pool.h)
 
 set(LIB_SOURCE_FILES
         )

@@ -2,18 +2,18 @@
 // Created by zhaojieyi on 2022/9/16.
 //
 
-#ifndef CODESNIPPET_SAFEQUEUE_H
-#define CODESNIPPET_SAFEQUEUE_H
+#ifndef CODESNIPPET_SAFE_QUEUE_H
+#define CODESNIPPET_SAFE_QUEUE_H
 
 #pragma once
 #include <mutex>
 #include <queue>
 
-template<typename T>
+template <typename T>
 class SafeQueue {
-public:
-    SafeQueue(){}
-    ~SafeQueue(){}
+ public:
+    SafeQueue() {}
+    ~SafeQueue() {}
 
     bool empty() {
         std::unique_lock<std::mutex> lk(m_mutex);
@@ -40,10 +40,9 @@ public:
         return true;
     }
 
-private:
+ private:
     std::queue<T> m_queue;
     std::mutex m_mutex;
 };
 
-#endif //CODESNIPPET_SAFEQUEUE_H
-
+#endif  // CODESNIPPET_SAFE_QUEUE_H

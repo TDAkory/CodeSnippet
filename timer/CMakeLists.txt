@@ -1,11 +1,12 @@
 project(Timer)
 
 set(LIB_HEADER_FILES
-        TimerBase.h
-        CBTimer.h)
+        timer_base.h
+        callback_timer.h
+        timer_decorator.h)
 
 set(LIB_SOURCE_FILES
-        CBTimer.cpp)
+        callback_timer.cpp)
 
 add_library(timer_lib ${LIB_SOURCE_FILES} ${LIB_HEADER_FILES})
 

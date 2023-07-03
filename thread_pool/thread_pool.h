@@ -2,8 +2,8 @@
 // Created by zhaojieyi on 2022/9/16.
 //
 
-#ifndef CODESNIPPET_THREADPOOL_H
-#define CODESNIPPET_THREADPOOL_H
+#ifndef CODESNIPPET_THREAD_POOL_H
+#define CODESNIPPET_THREAD_POOL_H
 
 #include <functional>
 #include <future>
@@ -12,10 +12,10 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include "SafeQueue.h"
+#include "safe_queue.h"
 
 class ThreadPool {
-public:
+ public:
     ThreadPool(const int n_threads) : shutdown_(false), threads_(std::vector<std::thread>(n_threads)) {}
 
     ThreadPool(const ThreadPool &) = delete;
@@ -24,7 +24,7 @@ public:
     ThreadPool &operator=(ThreadPool &&) = delete;
 
     void init() {
-        for(std::size_t i = 0; i < threads_.size(); i++) {
+        for (std::size_t i = 0; i < threads_.size(); i++) {
             threads_[i] = std::thread(ThreadWorker(this, i));
         }
     }
@@ -33,21 +33,19 @@ public:
         shutdown_ = true;
         conditional_lock_.notify_all();
         std::cout << "Task Left: " << queue_.size() << std::endl;
-        for(std::size_t i = 0; i < threads_.size(); i++) {
+        for (std::size_t i = 0; i < threads_.size(); i++) {
             if (threads_[i].joinable()) {
                 threads_[i].join();
             }
         }
     }
 
-    template<typename F, typename ...Args>
-    auto submit(F&& f, Args&&... args) -> std::future<decltype(f(args...))> {
+    template <typename F, typename... Args>
+    auto submit(F &&f, Args &&...args) -> std::future<decltype(f(args...))> {
         std::function<decltype(f(args...))()> func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
         auto task_ptr = std::make_shared<std::packaged_task<decltype(f(args...))()>>(func);
 
-        std::function<void()> wrapper_func = [task_ptr]() {
-            (*task_ptr)();
-        };
+        std::function<void()> wrapper_func = [task_ptr]() { (*task_ptr)(); };
 
         queue_.enqueue(wrapper_func);
         conditional_lock_.notify_one();
@@ -55,10 +53,9 @@ public:
         return task_ptr->get_future();
     }
 
-
-private:
+ private:
     class ThreadWorker {
-    public:
+     public:
         ThreadWorker(ThreadPool *p, const std::size_t id) : pool_(p), id_(id) {}
 
         void operator()() {
@@ -77,7 +74,8 @@ private:
                 }
             }
         }
-    private:
+
+     private:
         ThreadPool *pool_;
         std::size_t id_;
     };
@@ -89,4 +87,4 @@ private:
     std::condition_variable conditional_lock_;
 };
 
-#endif //CODESNIPPET_THREADPOOL_H
+#endif  // CODESNIPPET_THREAD_POOL_H
