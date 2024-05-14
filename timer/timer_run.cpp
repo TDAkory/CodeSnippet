@@ -20,6 +20,6 @@ void callback(std::shared_ptr<Alarm> alarm) {
 
 int main() {
     auto alarm = std::make_shared<Alarm>(1, "hello world");
-    callback_timer t(1, [alarm] { return callback(alarm); });
+    CallbackTimer t(1, [alarm] { return callback(alarm); });
     t.Start();
 }

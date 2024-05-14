@@ -5,9 +5,9 @@
 #ifndef CODESNIPPET_TIMER_BASE_H
 #define CODESNIPPET_TIMER_BASE_H
 
-class timer_base {
+class TimerBase {
  public:
-    virtual ~timer_base() {}
+    virtual ~TimerBase() {}
 
     virtual void Timeout() = 0;
 };

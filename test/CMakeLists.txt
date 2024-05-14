@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.12)
+
 project(CodeSnippet_tests)
 add_subdirectory(lib)
 
@@ -16,7 +18,7 @@ set(TEST_SRCS
         ../container/sync_pool_test.cpp
         ../container/bi_tree_printer_test.cpp
         ../op_func/scope_guard_test.cpp
-        )
+)
 
 add_definitions(-DCODESNIPPET_DO_TEST)
 
