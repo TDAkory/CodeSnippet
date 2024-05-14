@@ -12,15 +12,15 @@ CallbackTimer::CallbackTimer(int interval, Callback func) {
 }
 
 void CallbackTimer::Start() {
-    std::thread t([pimpl = pimpl_]() {
-        if (!pimpl->active.load()) {
+    std::thread t([=]() {
+        if (!pimpl_->active.load()) {
             return;
         }
-        std::this_thread::sleep_for(std::chrono::seconds(pimpl->interval));
-        if (!pimpl->active.load()) {
+        std::this_thread::sleep_for(std::chrono::seconds(pimpl_->interval));
+        if (!pimpl_->active.load()) {
             return;
         }
-        pimpl->func();
+        pimpl_->func();
     });
     t.detach();
 }

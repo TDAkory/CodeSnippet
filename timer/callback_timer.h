@@ -8,6 +8,7 @@
 #include <atomic>
 #include <functional>
 #include "timer_base.h"
+#include <memory>
 
 /**
  * callback_timer: short for CallBackTimer, for what need to be done is done by a callback func

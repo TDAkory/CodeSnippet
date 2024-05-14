@@ -5,6 +5,7 @@
 #include "proc_util.h"
 #include <fcntl.h>
 #include <string>
+#include <string.h>
 
 size_t physical_memory_used_by_process() {
   FILE *file = fopen("/proc/self/status", "r");
