@@ -11,6 +11,8 @@
 #include <iostream>
 #include <thread>
 
+namespace example_1 {
+
 struct SimpleAwaiter {
     int value;
     // false挂起，true则不挂起
@@ -58,5 +60,7 @@ Result Coroutine() {
 // 1
 // 1000
 // 2
+
+}  // namespace example_1
 
 #endif  // CODESNIPPET_EXAMPLE_1_H

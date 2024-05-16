@@ -8,6 +8,8 @@
 #include <coroutine>
 #include <iostream>
 
+namespace example_2 {
+
 struct Generator {
     class ExhaustedException : std::exception {};
 
@@ -118,5 +120,7 @@ void DoFibonacci(int N) {
         }
     }
 }
+
+}  // namespace example_2
 
 #endif  // CODESNIPPET_EXAMPLE_2_H
