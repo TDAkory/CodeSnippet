@@ -36,8 +36,8 @@ struct Result {
 
 template <typename R>
 struct TaskAwaiter {
-    explicit TaskAwaiter(Task<R> &&task) noexcept : task_(task) {}
-    TaskAwaiter(TaskAwaiter &&completion) noexcept : task_(std::exchange(completion.task_)) {}
+    explicit TaskAwaiter(Task<R> &&task) noexcept : task_(std::move(task)) {}
+    TaskAwaiter(TaskAwaiter &&completion) noexcept : task_(std::exchange(completion.task_, {})) {}
 
     TaskAwaiter(TaskAwaiter &) = delete;
     TaskAwaiter &operator=(TaskAwaiter &) = delete;
@@ -50,6 +50,7 @@ struct TaskAwaiter {
 
     R await_resume() noexcept { return task_.get_result(); }
 
+ private:
     Task<R> task_;
 };
 
@@ -57,7 +58,7 @@ template <typename ResultType>
 struct TaskPromise {
     std::suspend_never initial_suspend() { return {}; }
 
-    std::suspend_always final_suspend() { return {}; }
+    std::suspend_always final_suspend() noexcept { return {}; }
 
     Task<ResultType> get_return_object() { return Task{std::coroutine_handle<TaskPromise>::from_promise(*this)}; }
 
@@ -126,7 +127,7 @@ struct Task {
     Task &then(std::function<void(ResultType)> &&func) {
         handle_.promise().on_completed([func](auto result) {
             try {
-                func(result.get_or_throw());
+                func(result.GetOrThrow());
             }
             catch (std::exception &e) {
             }
@@ -138,7 +139,7 @@ struct Task {
         handle_.promise().on_completed([func](auto result) {
             try {
                 // 忽略返回值
-                result.get_or_throw();
+                result.GetOrThrow();
             }
             catch (std::exception &e) {
                 func(e);

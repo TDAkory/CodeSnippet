@@ -2,10 +2,36 @@
 // Created by zhaojieyi on 2024/5/14.
 //
 #include <algorithm>
+#include "../util/simple_log.h"
 #include "example_1.h"
 #include "example_2.h"
 #include "example_3.h"
 #include "example_4.h"
+
+example_4::Task<int> simple_task2() {
+    DEBUG("task 2 start ...");
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(1s);
+    DEBUG("task 2 returns after 1s.");
+    co_return 2;
+}
+
+example_4::Task<int> simple_task3() {
+    DEBUG("in task 3 start ...");
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(2s);
+    DEBUG("task 3 returns after 2s.");
+    co_return 3;
+}
+
+example_4::Task<int> simple_task() {
+    DEBUG("task start ...");
+    auto result2 = co_await simple_task2();
+    DEBUG("returns from task2: ", result2);
+    auto result3 = co_await simple_task3();
+    DEBUG("returns from task3: ", result3);
+    co_return 1 + result2 + result3;
+}
 
 int main() {
     //    {
@@ -40,64 +66,39 @@ int main() {
         //            return acc * i;  // 计算阶乘
         //        });
         //        std::cout << result << std::endl;
-
-        Generator<int>::From(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-            .Filter([](auto i) {
-                std::cout << "Filter: " << i << std::endl;
-                return i % 2 == 0;
-            })
-            .Map2([](auto i) {
-                std::cout << "map: " << i << std::endl;
-                return i * 3;
-            })
-            .FlatMap([](auto i) -> Generator<int> {
-                std::cout << "flat_map: " << i << std::endl;
-                for (int j = 0; j < i; ++j) {
-                    co_yield j;
-                }
-            })
-            .Take(10)
-            .ForEach([](auto i) { std::cout << "for_each: " << i << std::endl; });
+        //
+        //        Generator<int>::From(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        //            .Filter([](auto i) {
+        //                std::cout << "Filter: " << i << std::endl;
+        //                return i % 2 == 0;
+        //            })
+        //            .Map2([](auto i) {
+        //                std::cout << "map: " << i << std::endl;
+        //                return i * 3;
+        //            })
+        //            .FlatMap([](auto i) -> Generator<int> {
+        //                std::cout << "flat_map: " << i << std::endl;
+        //                for (int j = 0; j < i; ++j) {
+        //                    co_yield j;
+        //                }
+        //            })
+        //            .Take(10)
+        //            .ForEach([](auto i) { std::cout << "for_each: " << i << std::endl; });
     }
 
     {
         using namespace example_4;
 
-        Task<int> simple_task2() {
-            debug("task 2 start ...");
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(1s);
-            debug("task 2 returns after 1s.");
-            co_return 2;
-        }
-
-        Task<int> simple_task3() {
-            debug("in task 3 start ...");
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(2s);
-            debug("task 3 returns after 2s.");
-            co_return 3;
-        }
-
-        Task<int> simple_task() {
-            debug("task start ...");
-            auto result2 = co_await simple_task2();
-            debug("returns from task2: ", result2);
-            auto result3 = co_await simple_task3();
-            debug("returns from task3: ", result3);
-            co_return 1 + result2 + result3;
-        }
-
         auto simpleTask = simple_task();
-        simpleTask.then([](int i) { debug("simple task end: ", i); }).catching([](std::exception &e) {
-            debug("error occurred", e.what());
+        simpleTask.then([](int i) { DEBUG("simple task end: ", i); }).catching([](std::exception &e) {
+            DEBUG("error occurred ", e.what());
         });
         try {
             auto i = simpleTask.get_result();
-            debug("simple task end from get: ", i);
+            DEBUG("simple task end from get: ", i);
         }
         catch (std::exception &e) {
-            debug("error: ", e.what());
+            DEBUG("error: ", e.what());
         }
     }
 

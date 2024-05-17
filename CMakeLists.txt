@@ -5,7 +5,8 @@ project(CodeSnippet)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
 
-set(SOURCE_FILES main.cpp)
+set(SOURCE_FILES main.cpp
+        util/simple_log.h)
 
 add_executable(CodeSnippet_run ${SOURCE_FILES})
 
@@ -23,6 +24,7 @@ add_subdirectory(op_proc)
 add_subdirectory(static_reflect)
 add_subdirectory(thread_pool)
 add_subdirectory(timer)
+add_subdirectory(util)
 
 include(CheckIPOSupported)
 check_ipo_supported(RESULT result)

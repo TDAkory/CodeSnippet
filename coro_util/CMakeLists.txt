@@ -12,3 +12,5 @@ set(EXE_INCLUDE_FILES example_1.h
         example_4.h)
 
 add_executable(coro_run ${EXE_SOURCE_FILES} ${EXE_INCLUDE_FILES})
+
+target_link_libraries(coro_run Util_lib)
