@@ -7,6 +7,7 @@
 #include "example_2.h"
 #include "example_3.h"
 #include "example_4.h"
+#include "example_5.h"
 
 example_4::Task<int> simple_task2() {
     DEBUG("task 2 start ...");
@@ -29,6 +30,35 @@ example_4::Task<int> simple_task() {
     auto result2 = co_await simple_task2();
     DEBUG("returns from task2: ", result2);
     auto result3 = co_await simple_task3();
+    DEBUG("returns from task3: ", result3);
+    co_return 1 + result2 + result3;
+}
+
+example_5::Task<int, coro::AsyncExecutor> ex_simple_task2() {
+    DEBUG("task 2 start ...");
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(1s);
+    DEBUG("task 2 returns after 1s.");
+    co_return 2;
+}
+
+// 使用了 NewThread 调度器
+// 这意味着每个恢复的位置都会新建一个线程来执行
+example_5::Task<int, coro::NewThreadExecutor> ex_simple_task3() {
+    DEBUG("in task 3 start ...");
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(2s);
+    DEBUG("task 3 returns after 2s.");
+    co_return 3;
+}
+
+// 使用了 Looper 调度器
+// 这意味着每个恢复的位置都会在同一个线程上执行
+example_5::Task<int, coro::LooperExecutor> ex_simple_task() {
+    DEBUG("task start ...");
+    auto result2 = co_await ex_simple_task2();
+    DEBUG("returns from task2: ", result2);
+    auto result3 = co_await ex_simple_task3();
     DEBUG("returns from task3: ", result3);
     co_return 1 + result2 + result3;
 }
@@ -89,9 +119,23 @@ int main() {
     {
         using namespace example_4;
 
-        auto simpleTask = simple_task();
+        // auto simpleTask = simple_task();
+        // simpleTask.then([](int i) { DEBUG("simple task end: ", i); }).catching([](std::exception &e) {
+        //     DEBUG("error occurred ", e.what());
+        // });
+        // try {
+        //     auto i = simpleTask.get_result();
+        //     DEBUG("simple task end from get: ", i);
+        // }
+        // catch (std::exception &e) {
+        //     DEBUG("error: ", e.what());
+        // }
+    }
+    {
+        using namespace example_5;
+        auto simpleTask = ex_simple_task();
         simpleTask.then([](int i) { DEBUG("simple task end: ", i); }).catching([](std::exception &e) {
-            DEBUG("error occurred ", e.what());
+            DEBUG("error occurred", e.what());
         });
         try {
             auto i = simpleTask.get_result();

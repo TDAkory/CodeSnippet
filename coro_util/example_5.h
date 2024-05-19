@@ -1,9 +1,9 @@
 //
-// Created by zhaojieyi on 2024/5/16.
+// Created by zhaojieyi on 2024/5/19.
 //
 
-#ifndef CODESNIPPET_EXAMPLE_4_H
-#define CODESNIPPET_EXAMPLE_4_H
+#ifndef CODESNIPPET_EXAMPLE_5_H
+#define CODESNIPPET_EXAMPLE_5_H
 
 #include <condition_variable>
 #include <coroutine>
@@ -13,10 +13,11 @@
 #include <mutex>
 #include <optional>
 #include <utility>
+#include "executor.h"
 
-namespace example_4 {
+namespace example_5 {
 
-template <typename R>
+template <typename Result, typename Executor>
 struct Task;
 
 template <typename T>
@@ -36,10 +37,10 @@ struct Result {
     std::exception_ptr exception_ptr_{nullptr};
 };
 
-template <typename R>
+template <typename Result, typename Executor>
 struct TaskAwaiter {
-    explicit TaskAwaiter(Task<R> &&task) noexcept : task_(std::move(task)) {}
-    TaskAwaiter(TaskAwaiter &&completion) noexcept : task_(std::exchange(completion.task_, {})) {}
+    explicit TaskAwaiter(coro::AbstractExecutor *executor, Task<Result, Executor> &&task) noexcept
+        : executor_(executor), task_(std::move(task)) {}
 
     TaskAwaiter(TaskAwaiter &) = delete;
     TaskAwaiter &operator=(TaskAwaiter &) = delete;
@@ -47,39 +48,57 @@ struct TaskAwaiter {
     constexpr bool await_ready() const noexcept { return false; }
 
     void await_suspend(std::coroutine_handle<> handle) noexcept {
-        task_.finally([handle]() { handle.resume(); });
+        task_.finally([handle, this]() { executor_->execute([handle]() { handle.resume(); }); });
     }
 
-    R await_resume() noexcept { return task_.get_result(); }
+    Result await_resume() noexcept { return task_.get_result(); }
 
  private:
-    Task<R> task_;
+    Task<Result, Executor> task_;
+    coro::AbstractExecutor *executor_;
 };
 
-template <typename ResultType>
+struct DispatchAwaiter {
+    explicit DispatchAwaiter(coro::AbstractExecutor *executor) noexcept : executor_(executor) {}
+
+    bool await_ready() const { return false; }
+
+    void await_suspend(std::coroutine_handle<> handle) const {
+        executor_->execute([handle]() { handle.resume(); });
+    }
+
+    void await_resume() {}
+
+ private:
+    coro::AbstractExecutor *executor_;
+};
+
+template <typename ResultType, typename Executor>
 struct TaskPromise {
-    std::suspend_never initial_suspend() { return {}; }
+    DispatchAwaiter initial_suspend() { return DispatchAwaiter{&executor_}; }
 
     std::suspend_always final_suspend() noexcept { return {}; }
 
-    Task<ResultType> get_return_object() { return Task{std::coroutine_handle<TaskPromise>::from_promise(*this)}; }
+    Task<ResultType, Executor> get_return_object() {
+        return Task{std::coroutine_handle<TaskPromise>::from_promise(*this)};
+    }
 
     void unhandled_exception() {
-        std::lock_guard lk(mut_);
+        std::lock_guard<std::mutex> lk(mut_);
         result_ = Result<ResultType>(std::current_exception());
         cond_.notify_all();
         notify_callbacks();
     }
 
     void return_value(ResultType value) {
-        std::lock_guard lk(mut_);
+        std::lock_guard<std::mutex> lk(mut_);
         result_ = Result<ResultType>(std::move(value));
         cond_.notify_all();
         notify_callbacks();
     }
 
     void on_completed(std::function<void(Result<ResultType>)> &&func) {
-        std::unique_lock lk(mut_);
+        std::unique_lock<std::mutex> lk(mut_);
         if (result_.has_value()) {
             auto value = result_.value();
             lk.unlock();
@@ -90,16 +109,16 @@ struct TaskPromise {
     }
 
     ResultType get_result() {
-        std::unique_lock lk(mut_);
+        std::unique_lock<std::mutex> lk(mut_);
         if (!result_.has_value()) {
             cond_.wait(lk);
         }
         return result_->GetOrThrow();
     }
 
-    template <typename _ResultType>
-    TaskAwaiter<_ResultType> await_transform(Task<_ResultType> &&task) {
-        return TaskAwaiter<_ResultType>(std::move(task));
+    template <typename _ResultType, typename _Executor>
+    TaskAwaiter<_ResultType, _Executor> await_transform(Task<_ResultType, _Executor> &&task) {
+        return TaskAwaiter<_ResultType, _Executor>(&executor_, std::move(task));
     }
 
  private:
@@ -118,11 +137,13 @@ struct TaskPromise {
     std::condition_variable cond_;
 
     std::list<std::function<void(Result<ResultType>)>> callbacks_;
+
+    Executor executor_;
 };
 
-template <typename ResultType>
+template <typename ResultType, typename Executor = coro::NewThreadExecutor>
 struct Task {
-    using promise_type = TaskPromise<ResultType>;
+    using promise_type = TaskPromise<ResultType, Executor>;
 
     ResultType get_result() { return handle_.promise().get_result(); }
 
@@ -172,7 +193,6 @@ struct Task {
  private:
     std::coroutine_handle<promise_type> handle_;
 };
+}  // namespace example_5
 
-}  // namespace example_4
-
-#endif  // CODESNIPPET_EXAMPLE_4_H
+#endif

@@ -7,8 +7,10 @@
 
 #include <coroutine>
 #include <exception>
+#include <functional>
 #include <initializer_list>
 #include <list>
+#include <utility>
 
 namespace example_3 {
 
