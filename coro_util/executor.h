@@ -123,6 +123,130 @@ class SharedLooperExecutor : public AbstractExecutor {
     }
 };
 
+class DelayedExecutable {
+ public:
+    DelayedExecutable() = default;
+    DelayedExecutable(std::function<void()> &&func, long long delay) : func_(func) {
+        using namespace std;
+        using namespace std::chrono;
+
+        auto now = system_clock::now();
+        auto current = duration_cast<milliseconds>(now.time_since_epoch()).count();
+
+        scheduled_time_ = current + delay;
+    }
+
+    long long delay() const {
+        using namespace std;
+        using namespace std::chrono;
+
+        auto now = system_clock::now();
+        auto current = duration_cast<milliseconds>(now.time_since_epoch()).count();
+
+        return scheduled_time_ - current;
+    }
+
+    long long get_scheduled_time() const { return scheduled_time_; }
+
+    void operator()() { func_(); }
+
+ private:
+    long long scheduled_time_;
+    std::function<void()> func_;
+};
+
+class DelayedExecutableCompare {
+ public:
+    bool operator()(DelayedExecutable &left, DelayedExecutable &right) {
+        return left.get_scheduled_time() > right.get_scheduled_time();
+    }
+};
+
+class Schedular {
+ private:
+    std::condition_variable queue_cond_;
+    std::mutex mut_;
+
+    std::priority_queue<DelayedExecutable, std::vector<DelayedExecutable>, DelayedExecutableCompare> queue_;
+
+    std::atomic_bool active_;
+    std::thread worker_;
+
+    void loop() {
+        while (active_.load(std::memory_order_acquire) || !queue_.empty()) {
+            DelayedExecutable executable;
+            {
+                std::unique_lock lk(mut_);
+                if (queue_.empty()) {
+                    queue_cond_.wait(lk, [&]() { return !active_ || !queue_.empty(); });
+                    if (queue_.empty()) {
+                        continue;
+                    }
+                }
+                executable = queue_.top();
+                long long delay = executable.delay();
+
+                if (delay > 0) {
+                    auto status = queue_cond_.wait_for(lk, std::chrono::milliseconds(delay));
+                    if (status != std::cv_status::timeout) {
+                        continue;
+                    }
+                }
+
+                queue_.pop();
+            }
+            executable();
+        }
+    }
+
+ public:
+    Schedular() {
+        active_.store(true, std::memory_order_relaxed);
+        worker_ = std::thread(&Schedular::loop, this);
+    }
+
+    ~Schedular() {
+        shutdown(false);
+        // 等待线程执行完，防止出现意外情况
+        join();
+    }
+
+    void execute(std::function<void()> &&func, long long delay) {
+        delay = delay < 0 ? 0 : delay;
+        std::unique_lock lk(mut_);
+        if (active_.load()) {
+            bool need_notify = queue_.empty() || queue_.top().delay() > delay;
+            queue_.push(DelayedExecutable(std::move(func), delay));
+            lk.unlock();
+            if (need_notify) {
+                queue_cond_.notify_one();
+            }
+        }
+    }
+
+    void shutdown(bool wait_for_complete = true) {
+        // 修改后立即生效，在 run_loop 当中就能尽早（加锁前）就检测到 is_active 的变化
+        active_.store(false, std::memory_order_relaxed);
+        if (!wait_for_complete) {
+            std::unique_lock lock(mut_);
+            // 清空任务队列
+            decltype(queue_) empty_queue;
+            std::swap(queue_, empty_queue);
+            lock.unlock();
+        }
+
+        // 通知 wait 函数，避免 Looper 线程不退出
+        // 不需要加锁，否则锁会交给 wait 方导致当前线程阻塞
+        queue_cond_.notify_all();
+    }
+
+    void join() {
+        if (worker_.joinable()) {
+            worker_.join();
+        }
+    }
+};
+
 }  // namespace coro
 
 #endif

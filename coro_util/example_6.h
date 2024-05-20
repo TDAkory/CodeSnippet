@@ -5,7 +5,7 @@
 #ifndef CODESNIPPET_EXAMPLE_6_H
 #define CODESNIPPET_EXAMPLE_6_H
 
-#include <bits/chrono.h>
+#include <chrono>
 #include <condition_variable>
 #include <coroutine>
 #include <exception>
