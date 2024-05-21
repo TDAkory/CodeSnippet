@@ -162,7 +162,7 @@ class DelayedExecutableCompare {
     }
 };
 
-class Schedular {
+class Scheduler {
  private:
     std::condition_variable queue_cond_;
     std::mutex mut_;
@@ -200,12 +200,12 @@ class Schedular {
     }
 
  public:
-    Schedular() {
+    Scheduler() {
         active_.store(true, std::memory_order_relaxed);
-        worker_ = std::thread(&Schedular::loop, this);
+        worker_ = std::thread(&Scheduler::loop, this);
     }
 
-    ~Schedular() {
+    ~Scheduler() {
         shutdown(false);
         // 等待线程执行完，防止出现意外情况
         join();

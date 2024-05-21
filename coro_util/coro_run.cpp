@@ -8,6 +8,7 @@
 #include "example_3.h"
 #include "example_4.h"
 #include "example_5.h"
+#include "example_6.h"
 
 example_4::Task<int> simple_task2() {
     DEBUG("task 2 start ...");
@@ -59,6 +60,37 @@ example_5::Task<int, coro::LooperExecutor> ex_simple_task() {
     auto result2 = co_await ex_simple_task2();
     DEBUG("returns from task2: ", result2);
     auto result3 = co_await ex_simple_task3();
+    DEBUG("returns from task3: ", result3);
+    co_return 1 + result2 + result3;
+}
+
+example_6::Task<int, coro::AsyncExecutor> delay_simple_task2() {
+    DEBUG("task 2 start ...");
+    using namespace std::chrono_literals;
+    co_await 1s;
+    DEBUG("task 2 returns after 1s.");
+    co_return 2;
+}
+
+example_6::Task<int, coro::NewThreadExecutor> delay_simple_task3() {
+    DEBUG("in task 3 start ...");
+    using namespace std::chrono_literals;
+    co_await 2s;
+    DEBUG("task 3 returns after 2s.");
+    co_return 3;
+}
+
+example_6::Task<int, coro::LooperExecutor> delay_simple_task() {
+    DEBUG("task start ...");
+    using namespace std::chrono_literals;
+    co_await 100ms;
+    DEBUG("after 100ms ...");
+    auto result2 = co_await delay_simple_task2();
+    DEBUG("returns from task2: ", result2);
+
+    co_await 500ms;
+    DEBUG("after 500ms ...");
+    auto result3 = co_await delay_simple_task3();
     DEBUG("returns from task3: ", result3);
     co_return 1 + result2 + result3;
 }
@@ -132,8 +164,35 @@ int main() {
         // }
     }
     {
-        using namespace example_5;
-        auto simpleTask = ex_simple_task();
+        //        using namespace example_5;
+        //        auto simpleTask = ex_simple_task();
+        //        simpleTask.then([](int i) { DEBUG("simple task end: ", i); }).catching([](std::exception &e) {
+        //            DEBUG("error occurred", e.what());
+        //        });
+        //        try {
+        //            auto i = simpleTask.get_result();
+        //            DEBUG("simple task end from get: ", i);
+        //        }
+        //        catch (std::exception &e) {
+        //            DEBUG("error: ", e.what());
+        //        }
+    }
+    {
+        using namespace example_6;
+        //        auto schedular = coro::Scheduler();
+        //        DEBUG("start");
+        //
+        //        schedular.execute([]() { DEBUG("2"); }, 100);
+        //        schedular.execute([]() { DEBUG("1"); }, 50);
+        //        schedular.execute([]() { DEBUG("6"); }, 1000);
+        //        schedular.execute([]() { DEBUG("5"); }, 500);
+        //        schedular.execute([]() { DEBUG("3"); }, 200);
+        //        schedular.execute([]() { DEBUG("4"); }, 300);
+        //
+        //        schedular.shutdown();
+        //        schedular.join();
+
+        auto simpleTask = delay_simple_task();
         simpleTask.then([](int i) { DEBUG("simple task end: ", i); }).catching([](std::exception &e) {
             DEBUG("error occurred", e.what());
         });
