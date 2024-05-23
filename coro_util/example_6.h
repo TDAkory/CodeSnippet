@@ -1,21 +1,19 @@
 //
 // Created by zhaojieyi on 2024/5/19.
-//
+// #include <chrono>
+// #include <condition_variable>
+// #include <coroutine>
+// #include <exception>
+// #include <functional>
+// #include <list>
+// #include <mutex>
+// #include <optional>
+// #include <ratio>
+// #include <utility>
+// #include "executor.h"
 
 #ifndef CODESNIPPET_EXAMPLE_6_H
 #define CODESNIPPET_EXAMPLE_6_H
-
-#include <chrono>
-#include <condition_variable>
-#include <coroutine>
-#include <exception>
-#include <functional>
-#include <list>
-#include <mutex>
-#include <optional>
-#include <ratio>
-#include <utility>
-#include "executor.h"
 
 namespace example_6 {
 

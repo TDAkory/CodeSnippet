@@ -9,6 +9,7 @@
 #include "example_4.h"
 #include "example_5.h"
 #include "example_6.h"
+#include "example_7.h"
 
 example_4::Task<int> simple_task2() {
     DEBUG("task 2 start ...");
@@ -93,6 +94,49 @@ example_6::Task<int, coro::LooperExecutor> delay_simple_task() {
     auto result3 = co_await delay_simple_task3();
     DEBUG("returns from task3: ", result3);
     co_return 1 + result2 + result3;
+}
+
+example_7::Task<void, coro::LooperExecutor> Producer(example_7::Channel<int> &channel) {
+    int i = 0;
+    while (i < 10) {
+        DEBUG("send: " i);
+        co_await(channel << i++);
+        co_await 300ms;
+    }
+    channel.close();
+    DEBUG("close channel, exit.");
+}
+
+example_7::Task<void, coro::LooperExecutor> Consumer(example_7::Channel<int> &channel) {
+    while (channel.is_active()) {
+        try {
+            // 或者使用 read 函数：auto received = co_await channel.read();
+            int received;
+            co_await(channel >> received);
+            DEBUG("receive: ", received);
+            co_await 2s;
+        }
+        catch (std::exception &e) {
+            DEBUG("exception: ", e.what());
+        }
+    }
+
+    DEBUG("exit.");
+}
+
+example_7::Task<void, coro::LooperExecutor> Consumer2(example_7::Channel<int> &channel) {
+    while (channel.is_active()) {
+        try {
+            auto received = co_await channel.read();
+            DEBUG("receive2: ", received);
+            co_await 3s;
+        }
+        catch (std::exception &e) {
+            DEBUG("exception2: ", e.what());
+        }
+    }
+
+    DEBUG("exit.");
 }
 
 int main() {
@@ -191,18 +235,33 @@ int main() {
         //
         //        schedular.shutdown();
         //        schedular.join();
+        //
+        //        auto simpleTask = delay_simple_task();
+        //        simpleTask.then([](int i) { DEBUG("simple task end: ", i); }).catching([](std::exception &e) {
+        //            DEBUG("error occurred", e.what());
+        //        });
+        //        try {
+        //            auto i = simpleTask.get_result();
+        //            DEBUG("simple task end from get: ", i);
+        //        }
+        //        catch (std::exception &e) {
+        //            DEBUG("error: ", e.what());
+        //        }
+    }
+    {
+        using namespace example_7;
 
-        auto simpleTask = delay_simple_task();
-        simpleTask.then([](int i) { DEBUG("simple task end: ", i); }).catching([](std::exception &e) {
-            DEBUG("error occurred", e.what());
-        });
-        try {
-            auto i = simpleTask.get_result();
-            DEBUG("simple task end from get: ", i);
-        }
-        catch (std::exception &e) {
-            DEBUG("error: ", e.what());
-        }
+        auto channel = Channel<int>(2);
+        auto producer = Producer(channel);
+        auto consumer = Consumer(channel);
+        auto consumer2 = Consumer2(channel);
+
+        // 等待协程执行完成再退出
+        producer.get_result();
+        consumer.get_result();
+        consumer2.get_result();
+
+        return 0;
     }
 
     return 0;
