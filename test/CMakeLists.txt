@@ -22,7 +22,7 @@ set(TEST_SRCS
 
 add_definitions(-DCODESNIPPET_DO_TEST)
 
-add_executable(CodeSnippet_tests ${TEST_SRCS})
+add_executable(CodeSnippet_tests test_main.cpp ${TEST_SRCS})
 
 target_link_libraries(CodeSnippet_tests container_lib)
 target_link_libraries(CodeSnippet_tests FileOps_lib)
