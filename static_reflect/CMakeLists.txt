@@ -1,8 +1,7 @@
-project(StaticReflect)
+project(static_reflect)
 
 set(HEADER_FILES
         declarative_struct.h)
 
-add_library(StaticReflect INTERFACE ${HEADER_FILES})
-
-target_include_directories(StaticReflect INTERFACE .)
+add_library(cs_static_reflect INTERFACE ${HEADER_FILES})
+target_include_directories(cs_static_reflect INTERFACE .)

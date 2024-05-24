@@ -4,13 +4,9 @@ project(coro_util)
 
 set(CMAKE_CXX_STANDARD 23)
 
-set(EXE_SOURCE_FILES coro_run.cpp)
-
 file(GLOB EXAMPLE_INCLUDE LIST_DIRECTORIES false "example_\\d.h")
 
-set(EXE_INCLUDE_FILES
-        ${EXAMPLE_INCLUDE})
+add_library(cs_coro INTERFACE ${EXAMPLE_INCLUDE})
 
-add_executable(coro_run ${EXE_SOURCE_FILES} ${EXE_INCLUDE_FILES})
-
-target_link_libraries(coro_run Util_lib)
+add_executable(coro_run coro_run.cpp)
+target_link_libraries(coro_run cs_coro Util_lib)

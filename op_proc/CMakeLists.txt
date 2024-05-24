@@ -1,4 +1,4 @@
-project(ProcOps)
+project(proc_ops)
 
 set(HEADER_FILES
         proc_util.h)
@@ -6,4 +6,4 @@ set(HEADER_FILES
 set(SOURCE_FILES
         proc_util.cpp)
 
-add_library(ProcOps_lib ${SOURCE_FILES} ${HEADER_FILES})
+add_library(cs_proc ${SOURCE_FILES} ${HEADER_FILES})
