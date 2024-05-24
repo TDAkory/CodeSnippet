@@ -4,7 +4,7 @@ project(coro_util)
 
 set(CMAKE_CXX_STANDARD 23)
 
-file(GLOB EXAMPLE_INCLUDE LIST_DIRECTORIES false "example_\\d.h")
+file(GLOB EXAMPLE_INCLUDE LIST_DIRECTORIES false "example_*.h")
 
 add_library(cs_coro INTERFACE ${EXAMPLE_INCLUDE})
 

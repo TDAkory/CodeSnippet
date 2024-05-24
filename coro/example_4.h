@@ -25,7 +25,7 @@ struct Result {
     explicit Result(T &&value) : value_(value) {}
     explicit Result(std::exception_ptr &&e_ptr) : exception_ptr_(e_ptr) {}
 
-    T GetOrThrow() {
+    T get_or_throw() {
         if (exception_ptr_) {
             std::rethrow_exception(exception_ptr_);
         }
@@ -94,7 +94,7 @@ struct TaskPromise {
         if (!result_.has_value()) {
             cond_.wait(lk);
         }
-        return result_->GetOrThrow();
+        return result_->get_or_throw();
     }
 
     template <typename _ResultType>
@@ -129,7 +129,7 @@ struct Task {
     Task &then(std::function<void(ResultType)> &&func) {
         handle_.promise().on_completed([func](auto result) {
             try {
-                func(result.GetOrThrow());
+                func(result.get_or_throw());
             }
             catch (std::exception &e) {
             }
@@ -141,7 +141,7 @@ struct Task {
         handle_.promise().on_completed([func](auto result) {
             try {
                 // 忽略返回值
-                result.GetOrThrow();
+                result.get_or_throw();
             }
             catch (std::exception &e) {
                 func(e);

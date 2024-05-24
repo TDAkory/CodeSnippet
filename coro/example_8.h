@@ -28,7 +28,7 @@ struct Result {
     explicit Result(T &&value) : value_(value) {}
     explicit Result(std::exception_ptr &&e_ptr) : exception_ptr_(e_ptr) {}
 
-    T GetOrThrow() {
+    T get_or_throw() {
         if (exception_ptr_) {
             std::rethrow_exception(exception_ptr_);
         }
@@ -53,6 +53,32 @@ struct Result<void> {
 
  private:
     std::exception_ptr _exception_ptr;
+};
+
+template <typename R>
+struct Awaiter {
+    bool await_ready() const { return false; }
+
+    void await_suspend(std::coroutine_handle<> handle) { this->handle_ = handle; }
+
+    R await_resume() { return result_->get_or_throw(); }
+
+    void install_executor(coro::AbstractExecutor *executor) { executor_ = executor; }
+
+ protected:
+    std::optional<Result<R>> result_;
+
+ private:
+    coro::AbstractExecutor *executor_;
+    std::coroutine_handle<> handle_;
+
+    void dispatch(std::function<void()> &&f) {
+        if (executor_) {
+            executor_->execute(std::move(f));
+        } else {
+            f();
+        }
+    }
 };
 
 template <typename Result, typename Executor>
@@ -385,7 +411,7 @@ struct TaskPromise {
         if (!result_.has_value()) {
             cond_.wait(lk);
         }
-        return result_->GetOrThrow();
+        return result_->get_or_throw();
     }
 
     template <typename _ResultType, typename _Executor>
@@ -522,7 +548,7 @@ struct Task {
     Task &then(std::function<void(ResultType)> &&func) {
         handle_.promise().on_completed([func](auto result) {
             try {
-                func(result.GetOrThrow());
+                func(result.get_or_throw());
             }
             catch (std::exception &e) {
             }
@@ -534,7 +560,7 @@ struct Task {
         handle_.promise().on_completed([func](auto result) {
             try {
                 // 忽略返回值
-                result.GetOrThrow();
+                result.get_or_throw();
             }
             catch (std::exception &e) {
                 func(e);

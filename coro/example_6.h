@@ -1,19 +1,21 @@
 //
 // Created by zhaojieyi on 2024/5/19.
-// #include <chrono>
-// #include <condition_variable>
-// #include <coroutine>
-// #include <exception>
-// #include <functional>
-// #include <list>
-// #include <mutex>
-// #include <optional>
-// #include <ratio>
-// #include <utility>
-// #include "executor.h"
+//
 
 #ifndef CODESNIPPET_EXAMPLE_6_H
 #define CODESNIPPET_EXAMPLE_6_H
+
+#include <chrono>
+#include <condition_variable>
+#include <coroutine>
+#include <exception>
+#include <functional>
+#include <list>
+#include <mutex>
+#include <optional>
+#include <ratio>
+#include <utility>
+#include "executor.h"
 
 namespace example_6 {
 
@@ -26,7 +28,7 @@ struct Result {
     explicit Result(T &&value) : value_(value) {}
     explicit Result(std::exception_ptr &&e_ptr) : exception_ptr_(e_ptr) {}
 
-    T GetOrThrow() {
+    T get_or_throw() {
         if (exception_ptr_) {
             std::rethrow_exception(exception_ptr_);
         }
@@ -132,7 +134,7 @@ struct TaskPromise {
         if (!result_.has_value()) {
             cond_.wait(lk);
         }
-        return result_->GetOrThrow();
+        return result_->get_or_throw();
     }
 
     template <typename _ResultType, typename _Executor>
@@ -174,7 +176,7 @@ struct Task {
     Task &then(std::function<void(ResultType)> &&func) {
         handle_.promise().on_completed([func](auto result) {
             try {
-                func(result.GetOrThrow());
+                func(result.get_or_throw());
             }
             catch (std::exception &e) {
             }
@@ -186,7 +188,7 @@ struct Task {
         handle_.promise().on_completed([func](auto result) {
             try {
                 // 忽略返回值
-                result.GetOrThrow();
+                result.get_or_throw();
             }
             catch (std::exception &e) {
                 func(e);
