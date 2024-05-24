@@ -11,6 +11,8 @@
 #include "example_6.h"
 #include "example_7.h"
 
+using namespace std::chrono_literals;
+
 example_4::Task<int> simple_task2() {
     DEBUG("task 2 start ...");
     using namespace std::chrono_literals;
@@ -67,7 +69,6 @@ example_5::Task<int, coro::LooperExecutor> ex_simple_task() {
 
 example_6::Task<int, coro::AsyncExecutor> delay_simple_task2() {
     DEBUG("task 2 start ...");
-    using namespace std::chrono_literals;
     co_await 1s;
     DEBUG("task 2 returns after 1s.");
     co_return 2;
@@ -75,7 +76,6 @@ example_6::Task<int, coro::AsyncExecutor> delay_simple_task2() {
 
 example_6::Task<int, coro::NewThreadExecutor> delay_simple_task3() {
     DEBUG("in task 3 start ...");
-    using namespace std::chrono_literals;
     co_await 2s;
     DEBUG("task 3 returns after 2s.");
     co_return 3;
@@ -83,7 +83,6 @@ example_6::Task<int, coro::NewThreadExecutor> delay_simple_task3() {
 
 example_6::Task<int, coro::LooperExecutor> delay_simple_task() {
     DEBUG("task start ...");
-    using namespace std::chrono_literals;
     co_await 100ms;
     DEBUG("after 100ms ...");
     auto result2 = co_await delay_simple_task2();
@@ -99,7 +98,7 @@ example_6::Task<int, coro::LooperExecutor> delay_simple_task() {
 example_7::Task<void, coro::LooperExecutor> Producer(example_7::Channel<int> &channel) {
     int i = 0;
     while (i < 10) {
-        DEBUG("send: " i);
+        DEBUG("send: ", i);
         co_await(channel << i++);
         co_await 300ms;
     }

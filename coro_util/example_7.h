@@ -329,7 +329,7 @@ struct ReadAwaiter {
     }
 
     void resume(ValueType value) {
-        this->_value = value;
+        this->value_ = value;
         if (p_value_) {
             *p_value_ = value;
         }
@@ -432,7 +432,7 @@ struct TaskPromise {
 
 template <typename Executor>
 struct TaskPromise<void, Executor> {
-    DispatchAwaiter initial_suspend() { return DispatchAwaiter{&executor}; }
+    DispatchAwaiter initial_suspend() { return DispatchAwaiter{&executor_}; }
 
     std::suspend_always final_suspend() noexcept { return {}; }
 
@@ -440,23 +440,23 @@ struct TaskPromise<void, Executor> {
 
     template <typename _ResultType, typename _Executor>
     TaskAwaiter<_ResultType, _Executor> await_transform(Task<_ResultType, _Executor> &&task) {
-        return TaskAwaiter<_ResultType, _Executor>(&executor, std::move(task));
+        return TaskAwaiter<_ResultType, _Executor>(&executor_, std::move(task));
     }
 
     template <typename _Rep, typename _Period>
     SleepAwaiter await_transform(std::chrono::duration<_Rep, _Period> &&duration) {
-        return SleepAwaiter(&executor, std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
+        return SleepAwaiter(&executor_, std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
     }
 
     template <typename _ValueType>
     auto await_transform(ReadAwaiter<_ValueType> reader_awaiter) {
-        reader_awaiter.executor_ = &executor;
+        reader_awaiter.executor_ = &executor_;
         return reader_awaiter;
     }
 
     template <typename _ValueType>
     auto await_transform(WriteAwaiter<_ValueType> writer_awaiter) {
-        writer_awaiter.executor_ = &executor;
+        writer_awaiter.executor_ = &executor_;
         return writer_awaiter;
     }
 
@@ -502,7 +502,7 @@ struct TaskPromise<void, Executor> {
 
     std::list<std::function<void(Result<void>)>> completion_callbacks;
 
-    Executor executor;
+    Executor executor_;
 
     void notify_callbacks() {
         auto value = result.value();
