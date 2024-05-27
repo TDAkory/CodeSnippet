@@ -1,7 +1,9 @@
 //
 // Created by zhaojieyi on 2024/5/14.
 //
+#include <httplib.h>
 #include <algorithm>
+#include <nlohmann/json.hpp>
 #include "../util/simple_log.h"
 #include "example_1.h"
 #include "example_2.h"
@@ -10,6 +12,7 @@
 #include "example_5.h"
 #include "example_6.h"
 #include "example_7.h"
+#include "example_8.h"
 
 using namespace std::chrono_literals;
 
@@ -138,6 +141,32 @@ example_7::Task<void, coro::LooperExecutor> Consumer2(example_7::Channel<int> &c
     DEBUG("exit.");
 }
 
+example_8::Task<std::string, coro::AsyncExecutor> http_get(std::string host, std::string path) {
+    httplib::Client cli(host);
+    auto res = cli.Get(path.c_str());
+
+    if (res) {
+        co_return res->body;
+    } else {
+        co_return httplib::to_string(res.error());
+    }
+}
+
+example_8::Task<void, coro::LooperExecutor> test_http() {
+    try {
+        DEBUG("send request ...");
+
+        auto result = (co_await http_get("https://www.google.com/", ""));
+        DEBUG("done: ", result);
+
+        auto json = nlohmann::json::parse(result);
+        DEBUG(json.dump(2));
+    }
+    catch (std::exception &e) {
+        DEBUG(e.what());
+    }
+}
+
 int main() {
     //    {
     //        using namespace example_1;
@@ -250,17 +279,21 @@ int main() {
     {
         using namespace example_7;
 
-        auto channel = Channel<int>(2);
-        auto producer = Producer(channel);
-        auto consumer = Consumer(channel);
-        auto consumer2 = Consumer2(channel);
+        //        auto channel = Channel<int>(2);
+        //        auto producer = Producer(channel);
+        //        auto consumer = Consumer(channel);
+        //        auto consumer2 = Consumer2(channel);
+        //
+        //        // 等待协程执行完成再退出
+        //        producer.get_result();
+        //        consumer.get_result();
+        //        consumer2.get_result();
 
-        // 等待协程执行完成再退出
-        producer.get_result();
-        consumer.get_result();
-        consumer2.get_result();
-
-        return 0;
+        // return 0;
+    }
+    {
+        using namespace example_8;
+        test_http().get_result();
     }
 
     return 0;

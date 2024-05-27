@@ -130,7 +130,10 @@ struct Awaiter<void> {
     void install_executor(coro::AbstractExecutor *executor) { executor_ = executor; }
 
     void resume() {
-        dispatch([this]() { handle_.resume(); });
+        dispatch([this]() {
+            result_ = Result<void>();
+            handle_.resume();
+        });
     }
 
     void resume_unsafe() {
@@ -164,14 +167,17 @@ struct Awaiter<void> {
     }
 };
 
-template <typename Result, typename Executor>
-struct TaskAwaiter : public Awaiter<Result> {
-    explicit TaskAwaiter(Task<Result, Executor> &&task) noexcept : task_(std::move(task)) {}
+template <typename AwaiterImpl, typename R>
+concept AwaiterImplRestriction = std::is_base_of<Awaiter<R>, AwaiterImpl>::value;
+
+template <typename R, typename Executor>
+struct TaskAwaiter : public Awaiter<R> {
+    explicit TaskAwaiter(Task<R, Executor> &&task) noexcept : task_(std::move(task)) {}
 
     TaskAwaiter(TaskAwaiter &) = delete;
     TaskAwaiter &operator=(TaskAwaiter &) = delete;
 
-    TaskAwaiter(TaskAwaiter &&awaiter) noexcept : Awaiter<Result>(awaiter), task_(std::move(awaiter.task_)) {}
+    TaskAwaiter(TaskAwaiter &&awaiter) noexcept : Awaiter<R>(awaiter), task_(std::move(awaiter.task_)) {}
 
  protected:
     void after_suspend() override {
@@ -181,7 +187,7 @@ struct TaskAwaiter : public Awaiter<Result> {
     void before_resume() override { this->result_ = Result(task_.get_result()); }
 
  private:
-    Task<Result, Executor> task_;
+    Task<R, Executor> task_;
 };
 
 struct DispatchAwaiter {
@@ -452,6 +458,23 @@ struct TaskPromise {
         return Task{std::coroutine_handle<TaskPromise>::from_promise(*this)};
     }
 
+    template <typename _ResultType, typename _Executor>
+    TaskAwaiter<_ResultType, _Executor> await_transform(Task<_ResultType, _Executor> &&task) {
+        return await_transform(TaskAwaiter<_ResultType, _Executor>(std::move(task)));
+    }
+
+    template <typename _Rep, typename _Period>
+    auto await_transform(std::chrono::duration<_Rep, _Period> &&duration) {
+        return await_transform(SleepAwaiter(duration));
+    }
+
+    template <typename AwaiterImpl>
+    requires AwaiterImplRestriction<AwaiterImpl, typename AwaiterImpl::ResultType> AwaiterImpl await_transform(
+        AwaiterImpl awaiter) {
+        awaiter.install_executor(&executor_);
+        return awaiter;
+    }
+
     void unhandled_exception() {
         std::lock_guard<std::mutex> lk(mut_);
         result_ = Result<ResultType>(std::current_exception());
@@ -512,6 +535,23 @@ struct TaskPromise<void, Executor> {
     std::suspend_always final_suspend() noexcept { return {}; }
 
     Task<void, Executor> get_return_object() { return Task{std::coroutine_handle<TaskPromise>::from_promise(*this)}; }
+
+    template <typename _ResultType, typename _Executor>
+    TaskAwaiter<_ResultType, _Executor> await_transform(Task<_ResultType, _Executor> &&task) {
+        return await_transform(TaskAwaiter<_ResultType, _Executor>(std::move(task)));
+    }
+
+    template <typename _Rep, typename _Period>
+    SleepAwaiter await_transform(std::chrono::duration<_Rep, _Period> &&duration) {
+        return await_transform(SleepAwaiter(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()));
+    }
+
+    template <typename AwaiterImpl>
+    requires AwaiterImplRestriction<AwaiterImpl, typename AwaiterImpl::ResultType> AwaiterImpl await_transform(
+        AwaiterImpl &&awaiter) {
+        awaiter.install_executor(&executor_);
+        return awaiter;
+    }
 
     void get_result() {
         // blocking for result or throw on exception
