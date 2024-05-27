@@ -57,20 +57,103 @@ struct Result<void> {
 
 template <typename R>
 struct Awaiter {
+    using ResultType = R;
+
     bool await_ready() const { return false; }
 
-    void await_suspend(std::coroutine_handle<> handle) { this->handle_ = handle; }
+    void await_suspend(std::coroutine_handle<> handle) {
+        this->handle_ = handle;
+        after_suspend();
+    }
 
-    R await_resume() { return result_->get_or_throw(); }
+    R await_resume() {
+        before_resume();
+        return result_->get_or_throw();
+    }
 
     void install_executor(coro::AbstractExecutor *executor) { executor_ = executor; }
 
+    void resume(R value) {
+        dispatch([this, value]() {
+            result_ = Result<R>(static_cast<R>(value));
+            handle_.resume();
+        });
+    }
+
+    void resume_unsafe() {
+        dispatch([this]() { handle_.resume(); });
+    }
+
+    void resume_exception(std::exception_ptr &ex) {
+        dispatch([this, ex]() {
+            result_ = Result<R>(static_cast<std::exception_ptr>(ex));
+            handle_.resume();
+        });
+    }
+
  protected:
-    std::optional<Result<R>> result_;
+    std::optional<Result<R>> result_{};
+
+    virtual void after_suspend() {}
+
+    virtual void before_resume() {}
 
  private:
-    coro::AbstractExecutor *executor_;
-    std::coroutine_handle<> handle_;
+    coro::AbstractExecutor *executor_{nullptr};
+    std::coroutine_handle<> handle_{};
+
+    void dispatch(std::function<void()> &&f) {
+        if (executor_) {
+            executor_->execute(std::move(f));
+        } else {
+            f();
+        }
+    }
+};
+
+template <>
+struct Awaiter<void> {
+    using ResultType = void;
+
+    bool await_ready() const { return false; }
+
+    void await_suspend(std::coroutine_handle<> handle) {
+        this->handle_ = handle;
+        after_suspend();
+    }
+
+    void await_resume() {
+        before_resume();
+        return result_->get_or_throw();
+    }
+
+    void install_executor(coro::AbstractExecutor *executor) { executor_ = executor; }
+
+    void resume() {
+        dispatch([this]() { handle_.resume(); });
+    }
+
+    void resume_unsafe() {
+        dispatch([this]() { handle_.resume(); });
+    }
+
+    void resume_exception(std::exception_ptr &ex) {
+        dispatch([this, ex]() {
+            result_ = Result<void>(static_cast<std::exception_ptr>(ex));
+            handle_.resume();
+        });
+    }
+
+ protected:
+    std::optional<Result<void>> result_{};
+
+    virtual void after_suspend() {}
+
+    virtual void before_resume() {}
+
+ private:
+    coro::AbstractExecutor *executor_{nullptr};
+    std::coroutine_handle<> handle_{};
 
     void dispatch(std::function<void()> &&f) {
         if (executor_) {
@@ -82,24 +165,23 @@ struct Awaiter {
 };
 
 template <typename Result, typename Executor>
-struct TaskAwaiter {
-    explicit TaskAwaiter(coro::AbstractExecutor *executor, Task<Result, Executor> &&task) noexcept
-        : executor_(executor), task_(std::move(task)) {}
+struct TaskAwaiter : public Awaiter<Result> {
+    explicit TaskAwaiter(Task<Result, Executor> &&task) noexcept : task_(std::move(task)) {}
 
     TaskAwaiter(TaskAwaiter &) = delete;
     TaskAwaiter &operator=(TaskAwaiter &) = delete;
 
-    constexpr bool await_ready() const noexcept { return false; }
+    TaskAwaiter(TaskAwaiter &&awaiter) noexcept : Awaiter<Result>(awaiter), task_(std::move(awaiter.task_)) {}
 
-    void await_suspend(std::coroutine_handle<> handle) noexcept {
-        task_.finally([handle, this]() { executor_->execute([handle]() { handle.resume(); }); });
+ protected:
+    void after_suspend() override {
+        task_.finally([this]() { this->resume_unsafe(); });
     }
 
-    Result await_resume() noexcept { return task_.get_result(); }
+    void before_resume() override { this->result_ = Result(task_.get_result()); }
 
  private:
     Task<Result, Executor> task_;
-    coro::AbstractExecutor *executor_;
 };
 
 struct DispatchAwaiter {
@@ -117,24 +199,52 @@ struct DispatchAwaiter {
     coro::AbstractExecutor *executor_;
 };
 
-struct SleepAwaiter {
-    explicit SleepAwaiter(coro::AbstractExecutor *executor, long long duration) noexcept
-        : executor_(executor), duration_(duration) {}
+struct SleepAwaiter : Awaiter<void> {
+    explicit SleepAwaiter(long long duration) noexcept : duration_(duration) {}
 
-    bool await_ready() const { return false; }
+    template <typename _Rep, typename _Period>
+    explicit SleepAwaiter(std::chrono::duration<_Rep, _Period> &&duration) noexcept
+        : duration_(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()) {}
 
-    void await_suspend(std::coroutine_handle<> handle) const {
+    void after_suspend() override {
         static coro::Scheduler scheduler;
-
-        scheduler.execute([this, handle]() { executor_->execute([handle]() { handle.resume(); }); }, duration_);
+        scheduler.execute([this] { resume(); }, duration_);
     }
 
-    void await_resume() {}
-
  private:
-    coro::AbstractExecutor *executor_;
     long long duration_;
 };
+
+template <typename R>
+struct FutureAwaiter : public Awaiter<R> {
+    explicit FutureAwaiter(std::future<R> &&future) noexcept : future_(std::move(future)) {}
+
+    FutureAwaiter(FutureAwaiter &&awaiter) noexcept : Awaiter<R>(awaiter), future_(std::move(awaiter._future)) {}
+
+    FutureAwaiter(FutureAwaiter &) = delete;
+
+    FutureAwaiter &operator=(FutureAwaiter &) = delete;
+
+ protected:
+    void after_suspend() override {
+        // std::future::get 会阻塞等待结果的返回，因此我们新起一个线程等待结果的返回
+        // 如果后续 std::future 增加了回调，这里直接注册回调即可
+        std::thread([this]() {
+            // 获取结果，并恢复协程
+            this->resume(this->future_.get());
+        }).detach();
+        // std::thread 必须 detach 或者 join 二选一
+        // 也可以使用 std::jthread
+    }
+
+ private:
+    std::future<R> future_;
+};
+
+template <typename R>
+FutureAwaiter<R> as_awaiter(std::future<R> &&future) {
+    return FutureAwaiter(std::move(future));
+}
 
 template <typename ValueType>
 struct WriteAwaiter;
@@ -281,11 +391,9 @@ struct Channel {
 };
 
 template <typename ValueType>
-struct WriteAwaiter {
+struct WriteAwaiter : public Awaiter<void> {
     Channel<ValueType> *channel_;
-    coro::AbstractExecutor *executor_;
     ValueType value_;
-    std::coroutine_handle<> handle_;
 
     WriteAwaiter(Channel<ValueType> *channel, ValueType value) : channel_(channel), value_(value) {}
 
@@ -296,40 +404,22 @@ struct WriteAwaiter {
     }
 
     WriteAwaiter(WriteAwaiter &&other) noexcept
-        : channel_(std::exchange(other.channel_, nullptr)), executor_(std::exchange(other.executor_, nullptr)),
-          value_(other.value_), handle_(other.handle_) {}
+        : Awaiter(other), channel_(std::exchange(other.channel_, nullptr)), value_(other.value_) {}
 
-    bool await_ready() { return false; }
+    void after_suspend() override { channel_->try_push_writer(this); }
 
-    auto await_suspend(std::coroutine_handle<> handle) {
-        this->handle_ = handle;
-        channel_->try_push_writer(this);
-    }
-
-    void await_resume() {
+    void before_resume() override {
         channel_->check_closed();
         channel_ = nullptr;
-    }
-
-    void resume() {
-        if (executor_) {
-            executor_->execute([this]() { handle_.resume(); });
-        } else {
-            handle_.resume();
-        }
     }
 };
 
 template <typename ValueType>
-struct ReadAwaiter {
+struct ReadAwaiter : public Awaiter<ValueType> {
     Channel<ValueType> *channel_;
-    coro::AbstractExecutor *executor_ = nullptr;
-    ValueType value_;
-
     ValueType *p_value_ = nullptr;
-    std::coroutine_handle<> handle_;
 
-    explicit ReadAwaiter(Channel<ValueType> *channel) : channel_(channel) {}
+    explicit ReadAwaiter(Channel<ValueType> *channel) : Awaiter<ValueType>(), channel_(channel) {}
 
     ~ReadAwaiter() {
         if (channel_) {
@@ -338,36 +428,17 @@ struct ReadAwaiter {
     }
 
     ReadAwaiter(ReadAwaiter &&other) noexcept
-        : channel_(std::exchange(other.channel_, nullptr)), executor_(std::exchange(other.executor_, nullptr)),
-          value_(other.value_), p_value_(std::exchange(other.p_value_, nullptr)), handle_(other.handle_) {}
+        : Awaiter<ValueType>(other), channel_(std::exchange(other.channel_, nullptr)),
+          p_value_(std::exchange(other.p_value_, nullptr)) {}
 
-    bool await_ready() { return false; }
+    void after_suspend() override { channel_->try_push_reader(this); }
 
-    auto await_suspend(std::coroutine_handle<> coroutine_handle) {
-        this->handle_ = coroutine_handle;
-        channel_->try_push_reader(this);
-    }
-
-    int await_resume() {
+    void before_resume() override {
         channel_->check_closed();
-        channel_ = nullptr;
-        return value_;
-    }
-
-    void resume(ValueType value) {
-        this->value_ = value;
         if (p_value_) {
-            *p_value_ = value;
+            *p_value_ = this->result_->get_or_throw();
         }
-        resume();
-    }
-
-    void resume() {
-        if (executor_) {
-            executor_->execute([this]() { handle_.resume(); });
-        } else {
-            handle_.resume();
-        }
+        channel_ = nullptr;
     }
 };
 
@@ -414,28 +485,6 @@ struct TaskPromise {
         return result_->get_or_throw();
     }
 
-    template <typename _ResultType, typename _Executor>
-    TaskAwaiter<_ResultType, _Executor> await_transform(Task<_ResultType, _Executor> &&task) {
-        return TaskAwaiter<_ResultType, _Executor>(&executor_, std::move(task));
-    }
-
-    template <typename _Rep, typename _Period>
-    SleepAwaiter await_transform(std::chrono::duration<_Rep, _Period> &&duration) {
-        return SleepAwaiter(&executor_, std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
-    }
-
-    template <typename _ValueType>
-    auto await_transform(ReadAwaiter<_ValueType> read_awaiter) {
-        read_awaiter.executor_ = &executor_;
-        return read_awaiter;
-    }
-
-    template <typename _ValueType>
-    auto await_tranform(WriteAwaiter<_ValueType> write_awaiter) {
-        write_awaiter.executor_ = &executor_;
-        return write_awaiter;
-    }
-
  private:
     void notify_callbacks() {
         auto value = result_.value();
@@ -463,28 +512,6 @@ struct TaskPromise<void, Executor> {
     std::suspend_always final_suspend() noexcept { return {}; }
 
     Task<void, Executor> get_return_object() { return Task{std::coroutine_handle<TaskPromise>::from_promise(*this)}; }
-
-    template <typename _ResultType, typename _Executor>
-    TaskAwaiter<_ResultType, _Executor> await_transform(Task<_ResultType, _Executor> &&task) {
-        return TaskAwaiter<_ResultType, _Executor>(&executor_, std::move(task));
-    }
-
-    template <typename _Rep, typename _Period>
-    SleepAwaiter await_transform(std::chrono::duration<_Rep, _Period> &&duration) {
-        return SleepAwaiter(&executor_, std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
-    }
-
-    template <typename _ValueType>
-    auto await_transform(ReadAwaiter<_ValueType> reader_awaiter) {
-        reader_awaiter.executor_ = &executor_;
-        return reader_awaiter;
-    }
-
-    template <typename _ValueType>
-    auto await_transform(WriteAwaiter<_ValueType> writer_awaiter) {
-        writer_awaiter.executor_ = &executor_;
-        return writer_awaiter;
-    }
 
     void get_result() {
         // blocking for result or throw on exception
@@ -542,6 +569,8 @@ struct TaskPromise<void, Executor> {
 template <typename ResultType, typename Executor = coro::NewThreadExecutor>
 struct Task {
     using promise_type = TaskPromise<ResultType, Executor>;
+
+    auto as_awaiter() { return TaskAwaiter<ResultType, Executor>(std::move(*this)); }
 
     ResultType get_result() { return handle_.promise().get_result(); }
 
