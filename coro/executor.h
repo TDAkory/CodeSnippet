@@ -5,6 +5,7 @@
 #ifndef CODESNIPPET_EXECUTOR_H
 #define CODESNIPPET_EXECUTOR_H
 
+#include <concepts>
 #include <condition_variable>
 #include <functional>
 #include <future>
@@ -13,6 +14,11 @@
 #include <thread>
 
 namespace coro {
+
+template <class T>
+concept Executable = requires(T a) {
+    a.execute(std::function<void()>());
+};
 
 class AbstractExecutor {
  public:
