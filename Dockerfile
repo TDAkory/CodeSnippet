@@ -7,30 +7,18 @@ FROM debian:buster
 RUN apt-get update \
   && apt-get upgrade -y \
   && apt-get install -y  \
-      build-essential \
-      apt-utils \
-      openssh-server \
-      gcc \
-      g++ \
-      gdb \
-      gdbserver \
-      clang \
-      make \
-      ninja-build \
-      cmake \
-      autoconf \
-      automake \
-      libtool \
-      valgrind \
-      locales-all \
-      dos2unix \
-      rsync \
-      tar \
-      python \
-      python-dev \
-      rsync \
-      vim \
+      build-essential apt-utils openssh-server \
+      gcc  g++ gdb gdbserver clang make ninja-build cmake \
+      autoconf automake libtool valgrind locales-all \
+      dos2unix rsync python python-dev rsync \
+      vim curl zip unzip tar git pkg-config \
   && apt-get clean
+
+RUN git clone https://github.com/microsoft/vcpkg /vcpkg
+WORKDIR /vcpkg
+RUN ls
+RUN bash bootstrap-vcpkg.sh
+RUN ./vcpkg install cpp-httplib nlohmann-json
 
 ADD . /code
 WORKDIR /code

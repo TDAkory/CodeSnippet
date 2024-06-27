@@ -1,12 +1,16 @@
 cmake_minimum_required(VERSION 3.11)
 
+# when using docker image dev_env, use this one
+# set(CMAKE_TOOLCHAIN_FILE "/vcpkg/scripts/buildsystems/vcpkg.cmake")
+
 project(CodeSnippet)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -save-temps=obj")
 set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -save-temps=obj")
+
 
 set(SOURCE_FILES main.cpp)
 

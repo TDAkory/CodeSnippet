@@ -1,9 +1,9 @@
 //
 // Created by zhaojieyi on 2024/5/14.
 //
-#include <httplib.h>
+// #include<httplib.h>
 #include <algorithm>
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 #include "../util/simple_log.h"
 #include "example_1.h"
 #include "example_2.h"
@@ -141,37 +141,37 @@ example_7::Task<void, coro::LooperExecutor> Consumer2(example_7::Channel<int> &c
     DEBUG("exit.");
 }
 
-example_8::Task<std::string, coro::AsyncExecutor> http_get(std::string host, std::string path) {
-    httplib::Client cli(host);
-    auto res = cli.Get(path.c_str());
-
-    if (res) {
-        co_return res->body;
-    } else {
-        co_return httplib::to_string(res.error());
-    }
-}
-
-example_8::Task<void, coro::LooperExecutor> test_http() {
-    try {
-        DEBUG("send request ...");
-
-        auto result = (co_await http_get("https://www.google.com/", ""));
-        DEBUG("done: ", result);
-
-        auto json = nlohmann::json::parse(result);
-        DEBUG(json.dump(2));
-    }
-    catch (std::exception &e) {
-        DEBUG(e.what());
-    }
-}
+// example_8::Task<std::string, coro::AsyncExecutor> http_get(std::string host, std::string path) {
+//     httplib::Client cli(host);
+//     auto res = cli.Get(path.c_str());
+//
+//     if (res) {
+//         co_return res->body;
+//     } else {
+//         co_return httplib::to_string(res.error());
+//     }
+// }
+//
+// example_8::Task<void, coro::LooperExecutor> test_http() {
+//     try {
+//         DEBUG("send request ...");
+//
+//         auto result = (co_await http_get("https://www.google.com/", ""));
+//         DEBUG("done: ", result);
+//
+//         auto json = nlohmann::json::parse(result);
+//         DEBUG(json.dump(2));
+//     }
+//     catch (std::exception &e) {
+//         DEBUG(e.what());
+//     }
+// }
 
 int main() {
-    //    {
-    //        using namespace example_1;
-    //        Coroutine();  // basic
-    //    }
+    {
+        using namespace example_1;
+        Coroutine();  // basic
+    }
     //    {
     //        using namespace example_2;
     //        DoGenerate();     //  Generator
@@ -293,7 +293,7 @@ int main() {
     }
     {
         using namespace example_8;
-        test_http().get_result();
+        //        test_http().get_result();
     }
 
     return 0;
