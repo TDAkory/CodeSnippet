@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
 # when using docker image dev_env, use this one
-# set(CMAKE_TOOLCHAIN_FILE "/vcpkg/scripts/buildsystems/vcpkg.cmake")
+#set(CMAKE_TOOLCHAIN_FILE "/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 project(CodeSnippet)
 
@@ -28,6 +28,8 @@ add_subdirectory(static_reflect)
 add_subdirectory(thread_pool)
 add_subdirectory(timer)
 add_subdirectory(util)
+# code for advent_code_2024
+add_subdirectory(advent_code_2024)
 
 add_library(code_snippet INTERFACE)
 target_link_libraries(code_snippet INTERFACE cs_container cs_coro cs_util)
