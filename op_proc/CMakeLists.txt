@@ -5,6 +5,8 @@ set(HEADER_FILES
 
 set(SOURCE_FILES
         proc_util.cpp
+        cmd_util.cpp
+        cmd_util.h
 )
 
 add_library(cs_proc ${SOURCE_FILES} ${HEADER_FILES})

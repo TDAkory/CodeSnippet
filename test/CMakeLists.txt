@@ -13,6 +13,7 @@ set(TEST_SRCS
         ../container/falgo_test.cpp
         ../op_file/FileOps_test.cpp
         ../op_proc/proc_util_test.cpp
+        ../op_proc/cmd_util_test.cpp
         ../static_reflect/static_reflect_test.cpp
         ../op_str/StringSearch_test.cpp
         ../container/sync_pool_test.cpp
