@@ -9,9 +9,10 @@
 #include <vector>
 
 struct Block {
-    int start_idx;
-    int cap;
+    int start_idx{0};
+    int cap{0};
 
+    Block() = default;
     Block(int i, int j) : start_idx(i), cap(j) {}
 };
 
@@ -21,10 +22,31 @@ struct BlockCmp {
     }
 };
 
+inline bool FindAvaliableEmptyChunk(const std::vector<int> &blocks, const Block & file, int &start_idx) {
+    Block empty;
+    for (int i = 0; i < blocks.size(); i++) {
+        if (blocks[i] != INT_MIN) {
+            continue;
+        }
+        empty.start_idx = i;
+        while (blocks[i] == INT_MIN) {
+            empty.cap++;
+            i++;
+        }
+
+        if (empty.cap >= file.cap && empty.start_idx < file.start_idx) {
+            start_idx = empty.start_idx;
+            return true;
+        }
+        empty.cap = 0;
+    }
+    return false;
+}
+
 using Blocks = std::vector<Block>; // start_idx, cap
 
 long GetCompactCheckSum() {
-    std::ifstream file("/Users/bytedance/workspace/CodeSnippet/advent_code_2024/tmp.txt"); // 打开文件
+    std::ifstream file("/Users/bytedance/workspace/CodeSnippet/advent_code_2024/09.txt"); // 打开文件
     if (!file) {
         return -1;
     }
@@ -33,7 +55,6 @@ long GetCompactCheckSum() {
     bool block = true;
     int block_id = 0;
     std::vector<int> blocks;
-    Blocks empty_blocks;
     Blocks file_blocks;
     while (std::getline(file, line)) {
         for (const auto c : line) {
@@ -47,9 +68,6 @@ long GetCompactCheckSum() {
                 block = !block;
                 block_id++;
             } else {
-                if (num > 0) {
-                    empty_blocks.emplace_back(blocks.size(), num);
-                }
                 while (num > 0) {
                     blocks.push_back(INT_MIN);
                     num--;
@@ -59,32 +77,21 @@ long GetCompactCheckSum() {
         }
     }
 
-    std::sort(empty_blocks.begin(), empty_blocks.end(), BlockCmp());
-
    for (int i = file_blocks.size() - 1; i >= 0; i--) {
         auto &file_block = file_blocks[i];
-        for (auto it = empty_blocks.begin(); it != empty_blocks.end(); it++) {
-            if (it->cap >= file_block.cap) {
-                auto copy_times = file_block.cap;
-                auto dest_idx = it->start_idx;
-                auto src_idx = file_block.start_idx;
-                while(copy_times) {
-                    blocks[dest_idx] = blocks[src_idx];
-                    blocks[src_idx] = INT_MIN;
-                    dest_idx++;
-                    src_idx++;
-                    copy_times--;
-                }
-                auto left = it->cap - file_block.cap;
-                auto new_empty_start = it->start_idx + file_block.cap;
-                empty_blocks.erase(it);
-                if (left) {
-                    empty_blocks.emplace_back(new_empty_start, left);
-                }
-                std::sort(empty_blocks.begin(), empty_blocks.end(), BlockCmp());
-                break;
+        int start_idx = -1;
+        if (FindAvaliableEmptyChunk(blocks, file_block, start_idx)) {
+            auto copy_times = file_block.cap;
+            auto file_start = file_block.start_idx;
+            while (copy_times) {
+                blocks[start_idx] = blocks[file_start];
+                blocks[file_start] = INT_MIN;
+                start_idx++;
+                file_start++;
+                copy_times--;
             }
         }
+
    }
 
     long long sum = 0;

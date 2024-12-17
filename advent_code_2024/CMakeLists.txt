@@ -7,6 +7,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(Python3_EXECUTABLE /usr/bin/python3)
 
-set(SRCS main.cpp util.cpp 07.cpp)
+set(SRCS main.cpp 07.cpp)
 
 add_executable(advent_code_2024 ${SRCS})

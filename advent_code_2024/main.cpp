@@ -10,10 +10,13 @@
 #include "05.h"
 #include "06.h"
 #include "07.h"
-#include "08.h""
+#include "08.h"
 #include "09.h"
+#include "10.h"
+#include "11.h"
+#include "12.h"
 
 int main() {
-    std::cout << GetCompactCheckSum() << std::endl;
+    std::cout << GetFenceCost() << std::endl;
     return 0;
 }
