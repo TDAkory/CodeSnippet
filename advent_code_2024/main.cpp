@@ -15,8 +15,9 @@
 #include "10.h"
 #include "11.h"
 #include "12.h"
+#include "17.h"
 
 int main() {
-    std::cout << GetFenceCost() << std::endl;
+    std::cout << GetOutputs() << std::endl;
     return 0;
 }

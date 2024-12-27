@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.12)
 project(CodeSnippet_tests)
 add_subdirectory(lib)
 
+set(CMAKE_CXX_STANDARD 20)
+
 INCLUDE_DIRECTORIES(../container)
 INCLUDE_DIRECTORIES(../op_file)
 INCLUDE_DIRECTORIES(../static_reflect)
@@ -31,3 +33,5 @@ target_link_libraries(CodeSnippet_tests cs_str)
 target_link_libraries(CodeSnippet_tests cs_func)
 target_link_libraries(CodeSnippet_tests cs_proc)
 target_link_libraries(CodeSnippet_tests gtest gtest_main)
+
+#add_subdirectory(module_test)

@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM debian:latest
 
 ########################################################
 # Essential packages for remote debugging and login in
@@ -10,13 +10,15 @@ RUN apt-get update \
       build-essential apt-utils openssh-server \
       gcc  g++ gdb gdbserver clang make ninja-build cmake \
       autoconf automake libtool valgrind locales-all \
-      dos2unix rsync python python-dev rsync \
+      dos2unix rsync python3 rsync \
       vim curl zip unzip tar git pkg-config \
   && apt-get clean
 
 RUN git clone https://github.com/microsoft/vcpkg /vcpkg
 WORKDIR /vcpkg
 RUN ls
+# this is because run on arm chip
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 RUN bash bootstrap-vcpkg.sh
 RUN ./vcpkg install cpp-httplib nlohmann-json
 
@@ -32,7 +34,7 @@ RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/s
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 
-ENV NOTVISIBLE "in users profile"
+ENV NOTVISIBLE="in users profile"
 RUN echo "export VISIBLE=now" >> /etc/profile
 
 # 22 for ssh server. 7777 for gdb server.

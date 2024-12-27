@@ -1,0 +1,14 @@
+version: '1'
+
+services:
+  gdbserver:
+    build: .
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+    container_name: debug
+    ports:
+      - "7776:22"
+      - "7777:7777"
+    volumes:
+      - .:/code

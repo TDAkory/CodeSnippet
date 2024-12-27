@@ -14,7 +14,7 @@ namespace advent_of_code_2024_util {
 template <typename T>
 void PrintVec(const std::vector<T>& vec) {
   for (int i = 0; i < vec.size(); i++) {
-    std::cout << vec[i] << " ";
+    std::cout << vec[i] << ",";
   }
   std::cout << std::endl;
 }
