@@ -6,12 +6,13 @@
 #define CODESNIPPET_SYNC_POOL_H
 
 #include <mutex>
-#include "../test/test_common.h"
 
 namespace safe_container {
 
 template <typename T>
 class SyncPool {
+    friend class TestSyncPool_TestNormalOps_Test;
+
  public:
     SyncPool();
 

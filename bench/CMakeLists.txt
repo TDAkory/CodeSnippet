@@ -1,6 +1,6 @@
 project(CodeSnippet_bench)
 
-add_subdirectory(lib)
+find_package(benchmark CONFIG REQUIRED)
 
 INCLUDE_DIRECTORIES(../container)
 
@@ -13,4 +13,4 @@ set(BENCH_SRCS
 add_executable(CodeSnippet_bench ${BENCH_SRCS})
 
 target_link_libraries(CodeSnippet_bench cs_container)
-target_link_libraries(CodeSnippet_bench benchmark::benchmark)
+target_link_libraries(CodeSnippet_bench benchmark::benchmark benchmark::benchmark_main)

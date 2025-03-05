@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.12)
 
 project(CodeSnippet_tests)
-add_subdirectory(lib)
+
+find_package(GTest CONFIG REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 INCLUDE_DIRECTORIES(../container)
 INCLUDE_DIRECTORIES(../op_file)
@@ -33,6 +35,8 @@ target_link_libraries(CodeSnippet_tests cs_file)
 target_link_libraries(CodeSnippet_tests cs_str)
 target_link_libraries(CodeSnippet_tests cs_func)
 target_link_libraries(CodeSnippet_tests cs_proc)
-target_link_libraries(CodeSnippet_tests gtest gtest_main)
+target_link_libraries(CodeSnippet_tests GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+
+target_compile_options(CodeSnippet_tests PRIVATE -fno-access-control)
 
 #add_subdirectory(module_test)

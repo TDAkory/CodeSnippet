@@ -3,6 +3,10 @@
     "name": "foo-test",
     "supports": "(windows & x64 & !uwp) | (linux & x64) | (linux & arm64)",
     "dependencies": [
-        "fmt"
+        "fmt",
+        "cpp-httplib",
+        "nlohmann-json",
+        "gtest",
+        "benchmark"
     ]
 }
