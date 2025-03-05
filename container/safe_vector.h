@@ -83,36 +83,6 @@ class LFVector {
     std::vector<T> v_;
 };
 
-template <typename T>
-class TLVector {
- public:
-    thread_local static std::vector<T> vec_;
-
-    TLVector() = default;
-
-    ~TLVector() = default;
-
-    TLVector(const TLVector &v) {
-        v_ = v.v_;
-        vec_ = v.vec_;
-    }
-
-    TLVector(TLVector &&v) noexcept {
-        v_ = v.v_;
-        vec_ = v.vec_;
-    }
-
-    void push_back(const T &value) { vec_.push_back(value); }
-
-    void merge() { v_.insert(v_.end(), vec_.begin(), vec_.end()); }
-
- private:
-    std::vector<T> v_;
-    std::mutex m_;
-};
-
-template <typename T>
-thread_local std::vector<T> TLVector<T>::vec_;
 }  // namespace safe_container
 
 #endif  // CONTAINER_SAFE_VECTOR_H

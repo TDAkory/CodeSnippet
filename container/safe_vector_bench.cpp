@@ -12,20 +12,17 @@ using namespace safe_container;
 
 const int num = 50000;
 
-TLVector<int> *vec_thl;
 LVector<int> *vec_loc;
 LFVector<int> *vec_cas;
 
 mutex mtx;
 
 static void DoSetup(const benchmark::State &state) {
-    vec_thl = new TLVector<int>();
     vec_loc = new LVector<int>();
     vec_cas = new LFVector<int>();
 }
 
 static void DoTeardown(const benchmark::State &state) {
-    delete vec_thl;
     delete vec_loc;
     delete vec_cas;
 }
@@ -49,18 +46,6 @@ static void BM_VEC_CAS(benchmark::State &state) {
     }
 }
 
-static void BM_VEC_THL(benchmark::State &state) {
-    for (auto _ : state) {
-        do_push_back(num, vec_thl);
-        {
-            mtx.lock();
-            vec_thl->merge();
-            mtx.unlock();
-        }
-    }
-}
-
 // Register the function as a benchmark
 BENCHMARK(BM_VEC_LOC)->ThreadRange(1, 8)->Setup(DoSetup)->Teardown(DoTeardown);
 BENCHMARK(BM_VEC_CAS)->ThreadRange(1, 8)->Setup(DoSetup)->Teardown(DoTeardown);
-BENCHMARK(BM_VEC_THL)->ThreadRange(1, 8)->Setup(DoSetup)->Teardown(DoTeardown);

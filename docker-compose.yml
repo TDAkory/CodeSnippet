@@ -1,8 +1,9 @@
 version: '1'
 
 services:
-  gdbserver:
+  dev_container:
     build: .
+    image: dev_container
     security_opt:
       - seccomp:unconfined
       - apparmor:unconfined

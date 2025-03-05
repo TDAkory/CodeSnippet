@@ -2,7 +2,7 @@
 // Created by zhaojieyi on 2022/10/8.
 //
 
-#include "StringSearch.h"
+#include "string_search.h"
 #include "gtest/gtest.h"
 
 TEST(TestStringSearch, TestCaseInsensitive) {

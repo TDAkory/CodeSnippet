@@ -4,6 +4,7 @@
 
 #include "cmd_util.h"
 #include <array>
+#include <memory>
 
 bool CMDUtil::RunCMDAndGetResult(const std::string &cmd, std::string &result) {
     if (cmd.empty()) {
