@@ -11,6 +11,6 @@ set(HEADER_FILES
 set(SOURCE_FILES
         string_search.cpp
         string_split.cpp
-        )
+)
 
 add_library(cs_str ${SOURCE_FILES} ${HEADER_FILES})
