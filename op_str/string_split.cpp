@@ -6,7 +6,9 @@
 #include <vector>
 #include <sstream>
 #include <ranges>
-#include <emmintrin.h>
+#if defined(__SSE__)
+#include <immintrin.h>
+#endif
 
 std::vector<std::string> SplitByFind(const std::string& str, char delimiter) {
     std::vector<std::string> tokens;
@@ -42,7 +44,8 @@ std::vector<std::string> SplitC20(const std::string& s, char delimiter) {
     return result;
 }
 
-std::vector<std::string> splitStringSSE(const std::string& input, char delimiter) {
+#if defined(__SSE__)
+std::vector<std::string> SplitBySIMD(const std::string& input, char delimiter) {
     std::vector<std::string> result;
     const char* str = input.c_str();
     size_t len = input.length();
@@ -100,3 +103,4 @@ std::vector<std::string> splitStringSSE(const std::string& input, char delimiter
 
     return result;
 }
+#endif
