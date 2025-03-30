@@ -19,6 +19,12 @@ ARG LLVM_VERSION
 # | PRE-REQUISITE/INIT PACKAGES |
 # +-----------------------------+
 
+RUN rm -f /etc/apt/sources.list \
+    && echo "deb http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" > /etc/apt/sources.list \
+    && echo "deb http://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb http://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb http://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse" >> /etc/apt/sources.list
+
 RUN apt-get update && apt-get install -y locales && rm -rf /var/lib/apt/lists/* \
     && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 
@@ -82,19 +88,25 @@ RUN apt-get autoremove -y libmpfr-dev libgmp3-dev libmpc-dev
 # | LLVM                        |
 # +-----------------------------+
 
-RUN wget https://apt.llvm.org/llvm.sh && \
-    chmod +x llvm.sh && \
-    ./llvm.sh ${LLVM_VERSION} all && \
-    rm ./llvm.sh
+# RUN wget https://apt.llvm.org/llvm.sh && \
+#     chmod +x llvm.sh && \
+#     ./llvm.sh ${LLVM_VERSION} all && \
+#     rm ./llvm.sh
+
+RUN apt-get update \
+    && apt-get install -y llvm-17 llvm-17-dev clang-17 clangd-17 \
+    && update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-17 100 \
+    && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 100 \
+    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-17 100
 
 # add llvm to path
 ENV PATH="/usr/lib/llvm-${LLVM_VERSION}/bin:/usr/lib/llvm-${LLVM_VERSION}/include:${PATH}"
 ENV LD_LIBRARY_PATH="/usr/lib/llvm-${LLVM_VERSION}/lib:${LD_LIBRARY_PATH}"
 
 # unversionize the binaries
-RUN ln -s /usr/bin/clang-${LLVM_VERSION} /usr/bin/clang && \
-    ln -s /usr/bin/clang++-${LLVM_VERSION} /usr/bin/clang++ && \
-    ln -s /usr/bin/clang-format-${LLVM_VERSION} /usr/bin/clang-format
+# RUN ln -s /usr/bin/clang-${LLVM_VERSION} /usr/bin/clang && \
+#     ln -s /usr/bin/clang++-${LLVM_VERSION} /usr/bin/clang++ && \
+#     ln -s /usr/bin/clang-format-${LLVM_VERSION} /usr/bin/clang-format
 
 # update compiler environment vars
 ENV CC=/usr/bin/clang \
